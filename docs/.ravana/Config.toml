@@ -1,0 +1,30 @@
+# Key bindings:
+# The format for specifying key sequence is vim-style.
+# <C-key>						: Ctrl-key 			# (key can be any of A..Z or one of special keys listed below)	 
+# <S-key>						: Shift-key 
+# <A-key>/<M-key>		: Alt-key
+#	
+# <BS>							: Backspace
+# <Tab>							: Tab
+# <CR>							: Enter
+# <Enter>						: Enter
+# <Return>					: Enter
+# <Esc>							: Escape
+#	<Space>						: Space
+#	<Up>							: Up arrow
+#	<Down>						: Down arrow
+#	<Left>						: Left arrow
+#	<Right>						: Right arrow
+# <F1> - <F12>			: Function keys 1 to 12
+# <Insert>					: Insert
+# <Del>							: Delete	
+# <Home>						: Home
+# <End>							: End
+# <PageUp>					: Page-Up
+# <PageDown>				: Page-Down
+# <bar>							: '|' character
+
+[key-bindings]
+
+# Application
+app_quit						= "ZZ"					# Quit
