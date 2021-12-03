@@ -18,7 +18,7 @@ pub async fn load_config() -> Config {
         match File::open(Path::new(&format!("{}{}", path, "/Config.toml"))) {
             Ok(mut file) => {
                 let mut contents = String::new();
-                if let Ok(_) = file.read_to_string(&mut contents) {
+                if file.read_to_string(&mut contents).is_ok() {
                     if let Ok(config) = deserialize_toml(&contents) {
                         return config
                     }

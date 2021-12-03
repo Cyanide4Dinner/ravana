@@ -1,27 +1,16 @@
 pub mod config {
     use serde::Deserialize;
 
-    #[derive(PartialEq, Eq)]
-    #[derive(Deserialize, Debug)]
-    #[serde(rename_all(deserialize = "kebab-case"))]
-    #[serde(default)]
+    #[derive(Deserialize, Debug, PartialEq, Eq, Default)]
+    #[serde(rename_all(deserialize = "kebab-case"),default)]
     pub struct Config {
         pub key_bindings: KeyBindings
     }
 
-    #[derive(PartialEq, Eq)]
-    #[derive(Deserialize, Debug)]
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
     #[serde(default)]
     pub struct KeyBindings {
         pub app_quit: String,
-    }
-
-    impl Default for Config {
-        fn default() -> Config {
-            Config {
-                key_bindings: KeyBindings::default()
-            }
-        }
     }
 
     impl Default for KeyBindings {
