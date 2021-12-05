@@ -1,0 +1,85 @@
+name: push_codebase
+on:
+  # push:
+  #   branches: [ main ]
+  pull_request:
+    branches: [ main ]
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  build:
+    env:
+      COLORTERM: truecolor
+      NPROC: 2
+      TERM: xterm
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Notcurses dependencies"
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            cmake \
+            doctest-dev \
+            ffmpeg \
+            libavcodec-dev \
+            libavformat-dev \
+            libavutil-dev \
+            libdeflate-dev \
+            libncurses-dev \
+            libqrcodegen-dev \
+            libreadline-dev \
+            libswscale-dev \
+            libunistring-dev \
+            pkg-config \
+            clang
+      - name: "Notcurses checkout"
+        uses: actions/checkout@v2
+        with:
+          repository: dankamongmen/notcurses
+          token: ${{ github.token }}
+          path: notcurses
+          fetch-depth: 0
+      - name: "Notcurses CMake"
+        run: |
+          cd notcurses
+          mkdir build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DUSE_PANDOC=OFF \
+            -DUSE_QRCODEGEN=on
+      - name: "Notcurses Make"
+        run: |
+          cd notcurses/build
+          make -j${NPROC}
+      - name: "Notcurses Make install"
+        run: |
+          cd notcurses/build
+          sudo make install
+          sudo ldconfig
+      - name: "Ravana checkout"
+        uses: actions/checkout@v2
+      - name: "Install latest nightly"
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+      # - name: "Run cargo clippy"
+      #   uses: actions-rs/clippy-check@v1
+      #   with:
+      #     token: ${{ github.token }}
+      #     args: --no-deps
+      - name: "Ravana build"
+        run: cargo build --verbose
+      - name: "Ravana test"
+        run: cargo test --verbose
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Check spelling of .md files
+        uses: crate-ci/typos@master
+        with:
+          files: docs/**.md
