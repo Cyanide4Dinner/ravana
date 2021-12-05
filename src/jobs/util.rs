@@ -22,15 +22,15 @@ pub mod config {
     }
 }
 
-pub mod error {
-    use thiserror::Error;
-
-    #[derive(Error, Debug)]
-    pub enum JobError {
-       #[error("Failed to complete job: {0}")] 
-        JobFailError(String)
-    }
-}
+// pub mod error {
+//     use thiserror::Error;
+//
+//     #[derive(Error, Debug)]
+//     pub enum JobError {
+//        #[error("Failed to complete job: {0}")]
+//         JobFailError(String)
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
