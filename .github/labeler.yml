@@ -1,0 +1,10 @@
+repo:
+  - '*'
+test:
+  - 'src/tests/**/*'
+tui:
+  - 'src/tui/**/*'
+api:
+  - 'src/api/**/*'
+documentation:
+  - 'docs/**/*'
