@@ -12,7 +12,6 @@ use super::util::{
     // error::JobError
 };
 
-// TODO Integration test: Default struct and default Config.toml correspond.
 pub async fn load_config() -> Config {
     for path in CONFIG_DIR_PATHS {
         match File::open(Path::new(&format!("{}{}", path, "/Config.toml"))) {
