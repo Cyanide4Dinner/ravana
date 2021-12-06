@@ -30,6 +30,10 @@ pub async fn load_config() -> Config {
     Config::default()
 }
 
+pub async fn create_key_bindings_trie() {
+    
+}
+
 fn deserialize_toml(s: &str) -> Result<Config, toml::de::Error> {
     match toml::from_str(s) {
         Ok(toml) => { Ok(toml) }
