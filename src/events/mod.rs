@@ -1,3 +1,2 @@
-pub mod lifecycle;
-
 mod util;
+pub mod lifecycle;
