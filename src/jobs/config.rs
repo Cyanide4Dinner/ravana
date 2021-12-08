@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{ anyhow, Result };
 use log::{ error, warn };
 use std::{
     fs::File,
@@ -10,7 +10,7 @@ use std::{
 use crate::def::app::CONFIG_DIR_PATHS;
 use super::util::{
     config::{ Config },
-    // error::JobError
+    key_bindings::{ Key, KeyCombination, STRING_TO_KEYS }
 };
 
 pub async fn load_config() -> Config {
@@ -41,6 +41,21 @@ fn deserialize_toml(s: &str) -> Result<Config, toml::de::Error> {
         Err(e) => { 
             error!("Error deserializing: {:?}", e); 
             Err(e) 
+        }
+    }
+}
+
+fn parse_to_key_combination(key_comb_str: &str) -> Result<KeyCombination> {    
+    let hold_key = false;
+    let key_comb = KeyCombination::new();
+    let str_iter = key_comb_str.chars().peekable(); 
+    let add_key = |s: &str| -> Result<Key> {
+            if let Some(key) = STRING_TO_KEYS.get(s) { Ok(key.clone()) } 
+            else { Err(anyhow!(format!("Cannot find any key corresponding to {}", s))) } 
+    };
+    while let Some(c) = str_iter.next() {
+        if c == '<' {
+
         }
     }
 }
