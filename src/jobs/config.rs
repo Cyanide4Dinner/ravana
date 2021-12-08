@@ -1,10 +1,11 @@
-use anyhow::{ Result, /*Context*/ };
+use anyhow::Result;
 use log::{ error, warn };
 use std::{
     fs::File,
     io::prelude::*,
     path::Path
 };
+
 
 use crate::def::app::CONFIG_DIR_PATHS;
 use super::util::{
@@ -30,8 +31,8 @@ pub async fn load_config() -> Config {
     Config::default()
 }
 
-pub async fn create_key_bindings_trie() {
-    
+pub async fn create_key_bindings_trie() -> Result<()> {
+   Ok(()) 
 }
 
 fn deserialize_toml(s: &str) -> Result<Config, toml::de::Error> {
