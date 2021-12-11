@@ -46,25 +46,42 @@ fn deserialize_toml(s: &str) -> Result<Config, toml::de::Error> {
 }
 
 fn parse_to_key_combination(key_comb_str: &str) -> Result<KeyCombination> {    
-    let hold_key = false;
-    let key_comb = KeyCombination::new();
-    let str_iter = key_comb_str.chars().peekable(); 
-    let add_key = |s: &str| -> Result<Key> {
+    let mut key_comb = KeyCombination::new();
+    let find_key = |s: &str| -> Result<Key> {
             if let Some(key) = STRING_TO_KEYS.get(s) { Ok(key.clone()) } 
             else { Err(anyhow!(format!("Cannot find any key corresponding to {}", s))) } 
     };
-    while let Some(c) = str_iter.next() {
-        if c == '<' {
-
+    let mut is_special_key: bool = false;
+    let mut special_key_index = 0;
+    for (i, c) in key_comb_str.chars().enumerate() {
+        match c {
+            '<' => { 
+                if is_special_key { return Err(anyhow!("Invalid key-binding format {}, < wrongly placed", key_comb_str)); }
+                is_special_key = true; special_key_index = i+1; 
+            },
+            '-' => {
+                if !is_special_key { return Err(anyhow!("Invalid key-binding format {}, - wrongly placed", key_comb_str)); }
+                key_comb.push(find_key(&key_comb_str[special_key_index..i])?);
+                special_key_index = i+1;
+            },
+            '>' => {
+                if !is_special_key { return Err(anyhow!("Invalid key-binding format {}, > wrongly placed", key_comb_str)); }
+                key_comb.push(find_key(&key_comb_str[special_key_index..i])?);
+                is_special_key = false; 
+            },
+            _ =>  { 
+                if is_special_key { continue; }
+                else { key_comb.push(find_key(&c.to_string())?); } 
+            }
         }
     }
+    if is_special_key { return Err(anyhow!("Invalid key-binding format {}", key_comb_str)); }
+    Ok(key_comb)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::jobs::util::config::Config;
-
-    use super::deserialize_toml;
+    use super::{ Config, Key, KeyCombination, deserialize_toml, parse_to_key_combination  };
 
     #[test]
     fn test_deserialize_toml() {
@@ -77,5 +94,50 @@ mod tests {
         assert_eq!(res_config, exp_config);
         exp_config.key_bindings.app_quit = "ABC".to_owned();
         assert_ne!(res_config, exp_config);
+    }
+
+    #[test]
+    fn test_parse_to_key_combination() {
+        let key_comb1: KeyCombination = vec!{
+            Key::HoldCtrl,
+            Key::KeyB
+        }; 
+        assert_eq!(key_comb1, parse_to_key_combination("<C-b>").unwrap());
+
+        let key_comb2: KeyCombination = vec!{
+            Key::KeyEsc,
+        }; 
+        assert_eq!(key_comb2, parse_to_key_combination("<Esc>").unwrap());
+
+        let key_comb3: KeyCombination = vec!{
+            Key::HoldCtrl,
+            Key::KeyTab
+        }; 
+        assert_eq!(key_comb3, parse_to_key_combination("<C-Tab>").unwrap());
+
+        let key_comb4: KeyCombination = vec!{
+            Key::HoldCtrl,
+            Key::KeyA,
+            Key::KeyG
+        };
+        assert_eq!(key_comb4, parse_to_key_combination("<C-a>g").unwrap());
+
+        let key_comb5: KeyCombination = vec!{
+            Key::KeyG,
+            Key::KeyG
+        };
+        assert_eq!(key_comb5, parse_to_key_combination("gg").unwrap());
+
+        let key_comb6: KeyCombination = vec!{
+            Key::KeySpace,
+            Key::KeyX
+        };
+        assert_eq!(key_comb6, parse_to_key_combination("<Space>x").unwrap());
+
+        let key_comb7: KeyCombination = vec!{
+            Key::KeyG,
+            Key::KeyEsc
+        };
+        assert_eq!(key_comb7, parse_to_key_combination("g<Esc>").unwrap());
     }
 }

@@ -24,6 +24,7 @@ pub mod config {
 
 pub mod key_bindings {
     use anyhow::{ anyhow, Result, Context };
+    use phf::{ phf_map, Map };
     use radix_trie::{ Trie, TrieKey };
     use std::collections::HashMap;
     #[cfg(test)]
@@ -92,65 +93,66 @@ pub mod key_bindings {
         HoldAlt,
     }
 
-    pub const STRING_TO_KEYS: HashMap<&str, Key> = HashMap::from([
-        ("a", Key::KeyA),
-        ("b", Key::KeyB),
-        ("c", Key::KeyC),
-        ("d", Key::KeyD),
-        ("e", Key::KeyE),
-        ("f", Key::KeyF),
-        ("g", Key::KeyG),
-        ("h", Key::KeyH),
-        ("i", Key::KeyI),
-        ("j", Key::KeyJ),
-        ("l", Key::KeyL),
-        ("m", Key::KeyM),
-        ("n", Key::KeyN),
-        ("o", Key::KeyO),
-        ("o", Key::KeyO),
-        ("p", Key::KeyP),
-        ("q", Key::KeyQ),
-        ("r", Key::KeyR),
-        ("s", Key::KeyS),
-        ("t", Key::KeyT),
-        ("u", Key::KeyU),
-        ("v", Key::KeyV),
-        ("w", Key::KeyW),
-        ("x", Key::KeyX),
-        ("y", Key::KeyY),
-        ("z", Key::KeyZ),
-        ("CR", Key::KeyEnter),
-        ("Enter", Key::KeyEnter),
-        ("Return", Key::KeyEnter),
-        ("Esc", Key::KeyEsc),
-        ("Space", Key::KeySpace),
-        ("Up", Key::KeyUp),
-        ("Down", Key::KeyDown),
-        ("Left", Key::KeyLeft),
-        ("Right", Key::KeyRight),
-        ("F1", Key::KeyF1),
-        ("F2", Key::KeyF2),
-        ("F3", Key::KeyF3),
-        ("F4", Key::KeyF4),
-        ("F5", Key::KeyF5),
-        ("F6", Key::KeyF6),
-        ("F7", Key::KeyF7),
-        ("F8", Key::KeyF8),
-        ("F9", Key::KeyF9),
-        ("F10", Key::KeyF10),
-        ("F11", Key::KeyF11),
-        ("F12", Key::KeyF12),
-        ("Insert", Key::KeyInsert),
-        ("Del", Key::KeyDel),
-        ("Home", Key::KeyHome),
-        ("End", Key::KeyEnd),
-        ("PageUp", Key::KeyPageUp),
-        ("PageDown", Key::KeyPageDown),
-        ("C", Key::HoldCtrl),
-        ("M", Key::HoldAlt),
-        ("A", Key::HoldAlt),
-        ("M", Key::HoldAlt),
-    ]);
+    pub const STRING_TO_KEYS: Map<&'static str, Key> = phf_map!{
+        "a" => Key::KeyA,
+        "b" => Key::KeyB,
+        "c" => Key::KeyC,
+        "d" => Key::KeyD,
+        "e" => Key::KeyE,
+        "f" => Key::KeyF,
+        "g" => Key::KeyG,
+        "h" => Key::KeyH,
+        "i" => Key::KeyI,
+        "j" => Key::KeyJ,
+        "l" => Key::KeyL,
+        "m" => Key::KeyM,
+        "n" => Key::KeyN,
+        "o" => Key::KeyO,
+        "p" => Key::KeyP,
+        "q" => Key::KeyQ,
+        "r" => Key::KeyR,
+        "s" => Key::KeyS,
+        "t" => Key::KeyT,
+        "u" => Key::KeyU,
+        "v" => Key::KeyV,
+        "w" => Key::KeyW,
+        "x" => Key::KeyX,
+        "y" => Key::KeyY,
+        "z" => Key::KeyZ,
+        "CR" => Key::KeyEnter,
+        "Enter" => Key::KeyEnter,
+        "Return" => Key::KeyEnter,
+        "Esc" => Key::KeyEsc,
+        "Space" => Key::KeySpace,
+        "Tab" => Key::KeyTab,
+        "BS" => Key::KeyBackspace,
+        "Up" => Key::KeyUp,
+        "Down" => Key::KeyDown,
+        "Left" => Key::KeyLeft,
+        "Right" => Key::KeyRight,
+        "F1" => Key::KeyF1,
+        "F2" => Key::KeyF2,
+        "F3" => Key::KeyF3,
+        "F4" => Key::KeyF4,
+        "F5" => Key::KeyF5,
+        "F6" => Key::KeyF6,
+        "F7" => Key::KeyF7,
+        "F8" => Key::KeyF8,
+        "F9" => Key::KeyF9,
+        "F10" => Key::KeyF10,
+        "F11" => Key::KeyF11,
+        "F12" => Key::KeyF12,
+        "Insert" => Key::KeyInsert,
+        "Del" => Key::KeyDel,
+        "Home" => Key::KeyHome,
+        "End" => Key::KeyEnd,
+        "PageUp" => Key::KeyPageUp,
+        "PageDown" => Key::KeyPageDown,
+        "C" => Key::HoldCtrl,
+        "S" => Key::HoldShift,
+        "A" => Key::HoldAlt,
+        "M" => Key::HoldAlt,
+    };
 
     // pub(super) fn code_to_key(code: &u8) -> Result<Key> {
     //     match code {
@@ -277,7 +279,7 @@ pub mod key_bindings {
     //     }
     // }
 
-    pub(super) type KeyCombination = Vec<Key>;
+    pub type KeyCombination = Vec<Key>;
 
     // #[derive(Eq)]
     // pub struct KeyCombination(Vec<Key>);
@@ -313,7 +315,6 @@ mod tests {
     };
 
     use super::config::Config;
-    use super::key_bindings::{ Key, key_to_code, code_to_key };
 
     #[test]
     fn test_default_config() -> Result<()> {
@@ -325,14 +326,14 @@ mod tests {
         Ok(()) 
     }
 
-    #[test]
-    fn test_code_key_enum_conversions() {
-        let itr = Key::into_iter();
-        for _ in [0..Key::VARIANT_COUNT] {
-            if let Some(key) = itr.next() {  
-                assert_eq!(code_to_key(key_to_code(key).unwrap()).unwrap(), key);
-            }
-            else { panic!("No key returned by iterator") }
-        } 
-    }
+    // #[test]
+    // fn test_code_key_enum_conversions() {
+    //     let itr = Key::into_iter();
+    //     for _ in [0..Key::VARIANT_COUNT] {
+    //         if let Some(key) = itr.next() {
+    //             assert_eq!(code_to_key(key_to_code(key).unwrap()).unwrap(), key);
+    //         }
+    //         else { panic!("No key returned by iterator") }
+    //     }
+    // }
 }

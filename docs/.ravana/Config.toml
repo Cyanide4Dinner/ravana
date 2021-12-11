@@ -26,7 +26,7 @@
 # <PageDown>				: Page-Down
 # a..z							: a to z keys					# Note all alphabetic keys must be lower-case
 #
-# Some valid examples of key-combinations are : <C-Tab>, <C-a>g, gg, <Space>x, G<Esc>
+# Some valid examples of key-combinations are : <C-Tab>, <C-a>g, gg, <Space>x, g<Esc>
 
 [key-bindings]
 
