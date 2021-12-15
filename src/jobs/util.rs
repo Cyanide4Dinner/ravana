@@ -1,37 +1,67 @@
 pub mod config {
     use serde::Deserialize;
+    use std::collections::HashMap;
 
-    #[derive(Deserialize, Debug, PartialEq, Eq, Default)]
-    #[serde(rename_all(deserialize = "kebab-case"),default)]
-    pub struct Config {
-        pub key_bindings: KeyBindings
-    }
+    use super::key_bindings::DEFAULT_KEY_BINDINGS;
 
     #[derive(Deserialize, Debug, PartialEq, Eq)]
-    #[serde(default)]
-    pub struct KeyBindings {
-        pub app_quit: String,
+    #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
+    pub struct Config {
+        pub key_bindings: HashMap<String, String>
     }
-
-    impl Default for KeyBindings {
-        fn default() -> KeyBindings {
-            KeyBindings {
-                app_quit: "ZZ".to_string()
+    
+    //TODO: Resolve default configuration from default Config.toml directly - for cases where
+    // Config.toml is not found
+    impl Default for Config {
+        fn default() -> Config {
+            let mut default_key_bindings: HashMap<String, String> = HashMap::new();
+            for (&key, &value) in DEFAULT_KEY_BINDINGS.entries() {
+                default_key_bindings.insert(key.to_owned(), value.to_owned());
+            }
+            Config {
+                key_bindings: default_key_bindings
             }
         }
     }
+    // pub struct KeyBinding {
+    //     pub key_comb_str: String,
+    //     pub event: Box<dyn UserEvent>
+    // }
+    // pub static DEFAULT_KEY_BINDINGS: Map<&'static str, KeyBinding> = phf_map! {
+    //    "app_quit" => KeyBinding { key_comb_str: "zz".to_owned(), event: Box::new(user_events::AppQuit) }
+    // };
+
+    // lazy_static! {
+    //     pub static ref default_key_bindings: HashMap<&'static str, KeyBinding> = HashMap::from([
+    //         ("app_quit", KeyBinding { key_comb_str: "zz".to_owned(), event: Box::new(user_events::AppQuit) })
+    //     ]);
+    // }
+    
+    // #[derive(Deserialize, Debug, PartialEq, Eq)]
+    // #[serde(default)]
+    // pub struct KeyBindings {
+    //     pub app_quit: String,
+    // }
+    //
+    // impl Default for KeyBindings {
+    //     fn default() -> KeyBindings {
+    //         KeyBindings {
+    //             app_quit: "ZZ".to_string()
+    //         }
+    //     }
+    // }
 }
 
 pub mod key_bindings {
-    use anyhow::{ anyhow, Result, Context };
+    use anyhow::{ anyhow, Context, Result };
     use phf::{ phf_map, Map };
     use radix_trie::{ Trie, TrieKey };
-    use std::collections::HashMap;
     #[cfg(test)]
     use enum_iterator::IntoEnumIterator;
 
     use crate::events::UserEvent;
     
+    // Supported keys
     #[cfg_attr(test, derive(IntoEnumIterator))]
     #[derive(Clone, Debug, Eq, PartialEq)]
     pub enum Key {
@@ -93,6 +123,7 @@ pub mod key_bindings {
         HoldAlt,
     }
 
+    // Stirng literals in key-combination string format in Config.toml
     pub const STRING_TO_KEYS: Map<&'static str, Key> = phf_map!{
         "a" => Key::KeyA,
         "b" => Key::KeyB,
@@ -216,114 +247,155 @@ pub mod key_bindings {
     //         _ => Err(anyhow!("Invalid u8 key code: {}", code))
     //     }
     // }
-    //
-    // pub(super) fn key_to_code(key: &Key) -> Result<u8> {
-    //     match key {
-    //         KeyA => Ok(0x01u8),
-    //         KeyB => Ok(0x02u8),
-    //         KeyC => Ok(0x03u8),
-    //         KeyD => Ok(0x04u8),
-    //         KeyE => Ok(0x05u8),
-    //         KeyF => Ok(0x06u8),
-    //         KeyG => Ok(0x07u8),
-    //         KeyH => Ok(0x08u8),
-    //         KeyI => Ok(0x09u8),
-    //         KeyJ => Ok(0x0au8),
-    //         KeyK => Ok(0x0bu8),
-    //         KeyL => Ok(0x0cu8),
-    //         KeyM => Ok(0x0du8),
-    //         KeyN => Ok(0x0eu8),
-    //         KeyO => Ok(0x0fu8),
-    //         KeyP => Ok(0x10u8),
-    //         KeyQ => Ok(0x11u8),
-    //         KeyR => Ok(0x12u8),
-    //         KeyS => Ok(0x13u8),
-    //         KeyT => Ok(0x14u8),
-    //         KeyU => Ok(0x15u8),
-    //         KeyV => Ok(0x16u8),
-    //         KeyW => Ok(0x17u8),
-    //         KeyX => Ok(0x18u8),
-    //         KeyY => Ok(0x19u8),
-    //         KeyZ => Ok(0x1au8),
-    //         KeyEnter => Ok(0x1bu8),
-    //         KeyEsc => Ok(0x1cu8),
-    //         KeySpace => Ok(0x1du8),
-    //         KeyBackspace => Ok(0x1eu8),
-    //         KeyTab => Ok(0x1fu8),
-    //         KeyUp => Ok(0x20u8),
-    //         KeyDown => Ok(0x21u8),
-    //         KeyLeft => Ok(0x22u8),
-    //         KeyRight => Ok(0x23u8),
-    //         KeyF1 => Ok(0x24u8),
-    //         KeyF2 => Ok(0x25u8),
-    //         KeyF3 => Ok(0x26u8),
-    //         KeyF4 => Ok(0x27u8),
-    //         KeyF5 => Ok(0x28u8),
-    //         KeyF6 => Ok(0x29u8),
-    //         KeyF7 => Ok(0x2au8),
-    //         KeyF8 => Ok(0x2bu8),
-    //         KeyF9 => Ok(0x2cu8),
-    //         KeyF10 => Ok(0x2du8),
-    //         KeyF11 => Ok(0x2eu8),
-    //         KeyF12 => Ok(0x2fu8),
-    //         KeyInsert => Ok(0x30u8),
-    //         KeyDel => Ok(0x31u8),
-    //         KeyHome => Ok(0x32u8),
-    //         KeyEnd => Ok(0x33u8),
-    //         KeyPageUp => Ok(0x34u8),
-    //         KeyPageDown => Ok(0x35u8),
-    //         HoldCtrl => Ok(0x36u8),
-    //         HoldShift => Ok(0x37u8),
-    //         HoldAlt => Ok(0x38u8),
-    //         _ => Err(anyhow!("Invalid Key enum: {:?}", key))
-    //     }
-    // }
 
-    pub type KeyCombination = Vec<Key>;
-
-    // #[derive(Eq)]
-    // pub struct KeyCombination(Vec<Key>);
-    // impl PartialEq for KeyCombination {
-    //     fn eq(&self, other: &Self) -> bool {
-    //         assert_eq!(self.0.iter().eq(other.0.iter()), true);
-    //         true
-    //     }
-    // }
-    // impl TrieKey for KeyCombination {
-    //     fn encode_bytes(&self) -> Vec<u8> {
-    //         let mut key_code_vec: Vec<u8> = Vec::new();
-    //         for key in &self.0 {
-    //             key_code_vec.push(key_to_code(key).context(format!("key_to_code unable to find code for {:?}", key)).unwrap())
-    //         }
-    //         key_code_vec
-    //     }
-    // }
-    //
-    pub(super) struct KeyBindingsTrie {
-        leader: Key,
-        trie: Trie<KeyCombination, Box<dyn UserEvent>>
+    #[allow(unreachable_patterns)]
+    pub(super) fn key_to_code(key: &Key) -> Result<u8> {
+        match key {
+            Key::KeyA => Ok(0x01u8),
+            Key::KeyB => Ok(0x02u8),
+            Key::KeyC => Ok(0x03u8),
+            Key::KeyD => Ok(0x04u8),
+            Key::KeyE => Ok(0x05u8),
+            Key::KeyF => Ok(0x06u8),
+            Key::KeyG => Ok(0x07u8),
+            Key::KeyH => Ok(0x08u8),
+            Key::KeyI => Ok(0x09u8),
+            Key::KeyJ => Ok(0x0au8),
+            Key::KeyK => Ok(0x0bu8),
+            Key::KeyL => Ok(0x0cu8),
+            Key::KeyM => Ok(0x0du8),
+            Key::KeyN => Ok(0x0eu8),
+            Key::KeyO => Ok(0x0fu8),
+            Key::KeyP => Ok(0x10u8),
+            Key::KeyQ => Ok(0x11u8),
+            Key::KeyR => Ok(0x12u8),
+            Key::KeyS => Ok(0x13u8),
+            Key::KeyT => Ok(0x14u8),
+            Key::KeyU => Ok(0x15u8),
+            Key::KeyV => Ok(0x16u8),
+            Key::KeyW => Ok(0x17u8),
+            Key::KeyX => Ok(0x18u8),
+            Key::KeyY => Ok(0x19u8),
+            Key::KeyZ => Ok(0x1au8),
+            Key::KeyEnter => Ok(0x1bu8),
+            Key::KeyEsc => Ok(0x1cu8),
+            Key::KeySpace => Ok(0x1du8),
+            Key::KeyBackspace => Ok(0x1eu8),
+            Key::KeyTab => Ok(0x1fu8),
+            Key::KeyUp => Ok(0x20u8),
+            Key::KeyDown => Ok(0x21u8),
+            Key::KeyLeft => Ok(0x22u8),
+            Key::KeyRight => Ok(0x23u8),
+            Key::KeyF1 => Ok(0x24u8),
+            Key::KeyF2 => Ok(0x25u8),
+            Key::KeyF3 => Ok(0x26u8),
+            Key::KeyF4 => Ok(0x27u8),
+            Key::KeyF5 => Ok(0x28u8),
+            Key::KeyF6 => Ok(0x29u8),
+            Key::KeyF7 => Ok(0x2au8),
+            Key::KeyF8 => Ok(0x2bu8),
+            Key::KeyF9 => Ok(0x2cu8),
+            Key::KeyF10 => Ok(0x2du8),
+            Key::KeyF11 => Ok(0x2eu8),
+            Key::KeyF12 => Ok(0x2fu8),
+            Key::KeyInsert => Ok(0x30u8),
+            Key::KeyDel => Ok(0x31u8),
+            Key::KeyHome => Ok(0x32u8),
+            Key::KeyEnd => Ok(0x33u8),
+            Key::KeyPageUp => Ok(0x34u8),
+            Key::KeyPageDown => Ok(0x35u8),
+            Key::HoldCtrl => Ok(0x36u8),
+            Key::HoldShift => Ok(0x37u8),
+            Key::HoldAlt => Ok(0x38u8),
+            _ => Err(anyhow!("Invalid Key enum: {:?}", key))
+        }
     }
+
+    // Default map for key-bindings ( field-name -> key-binding )
+    pub const DEFAULT_KEY_BINDINGS: Map<&'static str, &'static str> = phf_map!{
+        "app_quit" => "zz" 
+    };
+
+    // pub type KeyCombination = Vec<Key>;
+
+    #[cfg_attr(test, derive(Debug))]
+    #[derive(Eq)]
+    pub struct KeyCombination(pub Vec<Key>);
+    impl PartialEq for KeyCombination {
+        fn eq(&self, other: &Self) -> bool {
+            assert_eq!(self.0.iter().eq(other.0.iter()), true);
+            true
+        }
+    }
+    impl TrieKey for KeyCombination {
+        fn encode_bytes(&self) -> Vec<u8> {
+            let mut key_code_vec: Vec<u8> = Vec::new();
+            for key in &self.0 {
+                key_code_vec.push(key_to_code(key).context(format!("key_to_code unable to find code for {:?}", key)).unwrap())
+            }
+            key_code_vec
+        }
+    }
+
+    //TODO: Add support for leader key.
+    pub type KeyBindingsTrie = Trie<KeyCombination, Box<dyn UserEvent>>;
+    // pub struct KeyBindingsTrie {
+    //     leader: Key,    
+    //     trie: Trie<KeyCombination, Box<dyn UserEvent>>
+    // }
 }
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
+    use anyhow::{ anyhow, Result };
+    use enum_iterator::IntoEnumIterator;
     use std::{
+        collections::{ HashMap, HashSet },
         fs::File,
         io::prelude::*,
         path::Path
     };
 
-    use super::config::Config;
+    use super::config::{ Config };
+    use super::key_bindings::{ DEFAULT_KEY_BINDINGS, Key, key_to_code };
 
+    // * Test if all key-values pairs in DEFAULT_KEY_BINDINGS map and Config.toml match exactly
     #[test]
-    fn test_default_config() -> Result<()> {
+    fn test_default_key_bindings() -> Result<()> {
         let mut file = File::open(Path::new("docs/.ravana/Config.toml"))?;
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
-        let config: Config = toml::from_str(&*contents)?;  
-        assert_eq!(config, Config::default());
-        Ok(()) 
+        let key_bindings_res: HashMap<String,String> = toml::from_str::<Config>(&*contents)?.key_bindings;  
+
+        for res_key in key_bindings_res.keys() {
+            if let Some(res_val) = key_bindings_res.get(res_key) {
+                if let Some(exp_val) = DEFAULT_KEY_BINDINGS.get(&res_key) { assert_eq!(exp_val, res_val); }
+                else { return Err(anyhow!("Cannot find key-value in default key-binding map for {}", res_key)); }
+            }
+        }
+
+        for exp_key in DEFAULT_KEY_BINDINGS.keys() {
+            if let Some(exp_val) = DEFAULT_KEY_BINDINGS.get(exp_key) {
+                if let Some(res_val) = key_bindings_res.get(exp_key.to_owned()) { assert_eq!(exp_val, res_val); } 
+                else { return Err(anyhow!("Cannot find key-value in default Config.toml for {}", exp_key)); }
+            }
+        }
+        Ok(())
+    }
+
+    // * Test if all keys are present in key_to_code
+    // * Test all codes must be different
+    #[test]
+    fn test_key_to_code() -> Result<()> {
+        let mut key_codes: HashMap<u8, Key> = HashMap::new();
+        for key in Key::into_enum_iter() {
+            let code = key_to_code(&key)?;                            
+            if key_codes.contains_key(&code) { 
+                if let Some(matching_key) = key_codes.get(&code) { return Err(anyhow!("Matching code {} exists for another key: {:?} & {:?}", code, key, matching_key)); }
+            }
+            else { key_codes.insert(code, key); }
+        }  
+        Ok(())  
     }
 
     // #[test]

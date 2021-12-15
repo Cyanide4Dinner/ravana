@@ -31,4 +31,4 @@
 [key-bindings]
 
 # Application
-app_quit						= "ZZ"					# Quit
+app_quit						= "zz"					# Quit
