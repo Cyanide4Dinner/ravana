@@ -4,6 +4,7 @@ pub mod def;
 mod tui;
 mod events;
 pub mod jobs;
+pub mod input;
 
 #[tokio::main]
 async fn main(){
@@ -13,7 +14,8 @@ async fn main(){
 
     //api::call_api();
     //api::oauth::oauth_process();
-    tui::test_tui();
+    // tui::test_tui();
     events::lifecycle::init().await.unwrap();
+    // events::lifecycle::test_tui().unwrap();
 }   
 

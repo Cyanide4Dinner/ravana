@@ -30,10 +30,11 @@ pub async fn load_config() -> Config {
             Err(e) => { warn!("Skipping opening file: {}, due to: {:?}", path, e); }
         }
     }
+    error!("Returning default config.");
     Config::default()
 }
 
-async fn create_key_bindings_trie(kb: &HashMap<String, String>) -> Result<KeyBindingsTrie> {
+pub async fn create_key_bindings_trie(kb: &HashMap<String, String>) -> Result<KeyBindingsTrie> {
     let mut kb_trie: KeyBindingsTrie = KeyBindingsTrie::new();
     for (&key, &def_val) in DEFAULT_KEY_BINDINGS.entries() {
         if let Some(val) = kb.get(key) {
