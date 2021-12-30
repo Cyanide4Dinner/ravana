@@ -1,5 +1,5 @@
 use anyhow::{ anyhow, Result };
-use log::{ error, warn };
+use log::{ error, info, warn };
 use std::{
     fs::File,
     io::prelude::*,
@@ -22,6 +22,7 @@ pub async fn load_config() -> Config {
                 let mut contents = String::new();
                 if file.read_to_string(&mut contents).is_ok() {
                     if let Ok(config) = deserialize_toml(&contents) {
+                        info!("Using config at: {}", path);
                         return config
                     }
                 }
@@ -35,6 +36,7 @@ pub async fn load_config() -> Config {
 }
 
 pub async fn create_key_bindings_trie(kb: &HashMap<String, String>) -> Result<KeyBindingsTrie> {
+    info!("Creating key-bindings trie.");
     let mut kb_trie: KeyBindingsTrie = KeyBindingsTrie::new();
     for (&key, &def_val) in DEFAULT_KEY_BINDINGS.entries() {
         if let Some(val) = kb.get(key) {

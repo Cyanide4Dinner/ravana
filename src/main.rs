@@ -1,4 +1,5 @@
 use env_logger;
+use log::info;
 
 //use tokio::task;
 //mod api;
@@ -12,6 +13,7 @@ pub mod input;
 #[tokio::main]
 async fn main(){
     env_logger::init();
+    info!("Starting");
     // let rt = tokio::runtime::Runtime::new().unwrap();
     // let future = api::call_api();
     // rt.block_on(async { future });

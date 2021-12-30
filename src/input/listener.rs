@@ -6,19 +6,21 @@ use libnotcurses_sys::{
     NcReceived,
     NcResult
 }; 
-use log::warn;
+use log::{ info, warn };
 use std::sync::{ Arc, Mutex };
 
 use crate::jobs::{ Config, config::create_key_bindings_trie, Key, KeyBindingsTrie, KeyCombination  };
 
 pub async fn init(nc: Arc<Mutex<&mut Nc>>, config: Arc<Config>) -> Result<()> {
+    info!("Init input listener.");
     let kbt =  create_key_bindings_trie(&config.key_bindings).await.context("Error parsing key-bindings.")?;
     listen(nc, kbt)?;
     Ok(())
 }
 
 //TODO: Use file descriptor IO multiplexing for waiting for input. (see notcurses_inputready_fd)
-fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> NcResult<()> {
+fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> Result<()> {
+    info!("Begin input listening loops.");
     loop {
         let mut nc_lock = nc.lock().unwrap(); // Lock Nc instance.
         let mut input_details = NcInput::new_empty();
@@ -28,67 +30,7 @@ fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> NcResult<()> {
         if let Some(key_comb) = gen_key_comb(&recorded_input, &input_details) {
             println!("Key combination: {:?}", key_comb);
         }
-        // match recorded_input {
-        //     NcReceived::Char(ch) => {
-        //         println!("Inputted: {}", ch);
-        //     }
-        //     _ => { println!("Not a char."); }
-        // }
     }
-
-    //Testing
-    // let mut nc = nc.lock().unwrap();
-    // let splane = unsafe { nc.stdplane() };
-    // splane.set_scrolling(true);
-    //
-    // putstrln!(splane, "Input example.\nPress any key to continue:")?;
-    // nc.render()?;
-    // let rec = nc.get_blocking(None)?;
-    // putstrln!(splane, "Received: {:?}\n", rec)?;
-    //
-    // putstrln!(
-    //     splane,
-    //     "Press more keys to see their input. You can exit with F1.\n"
-    // )?;
-    //
-    // let mut input = NcInput::new_empty();
-    // loop {
-    //     let rec = nc.get_nblock(Some(&mut input))?;
-    //     match rec {
-    //         NcReceived::Char(ch) => {
-    //             putstrln!(
-    //                 splane,
-    //                 "char: '{0}' \n{1:?} {2:?}\n",
-    //                 ch,
-    //                 input,
-    //                 input.char()
-    //             )?;
-    //         }
-    //         NcReceived::Event(ev) => {
-    //             putstrln!(
-    //                 splane,
-    //                 "event: {0:?}\n  {1:?} {2:?}\n",
-    //                 ev.name(),
-    //                 input,
-    //                 input.char()
-    //             )?;
-    //             match ev {
-    //                 NcKey::F01 => break,
-    //                 _ => (),
-    //             }
-    //         }
-    //         NcReceived::Other(o) => {
-    //             putstrln!(
-    //                 splane,
-    //                 "other (this shouldn't happen): {0:?} \n{1:?}\n",
-    //                 o,
-    //                 input
-    //             )?;
-    //         }
-    //         _ => (),
-    //     }
-    // }
-    // Ok(())
 } 
 
 //TODO: Test function to see if all keys are covered and all possibilities handled.
