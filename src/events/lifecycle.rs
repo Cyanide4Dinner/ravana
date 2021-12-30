@@ -10,7 +10,7 @@ pub async fn init() -> Result<()> {
     let config = Arc::new(load_config().await);
     let nc = Arc::new(Mutex::new(unsafe { Nc::new()? }));
     
-    // tokio::spawn(listen_init(Arc::clone(&nc), config.clone()));
+    // tokio::spawn(listen_init(Arc::clone(&nc), Arc::clone(&config)));
     listen_init(Arc::clone(&nc), Arc::clone(&config)).await.unwrap();
     Ok(()) 
 }

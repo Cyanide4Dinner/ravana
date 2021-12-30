@@ -9,7 +9,7 @@ pub fn test_tui(){
     let nc = unsafe{ Nc::new().unwrap() };    
     init(nc).unwrap();
     render(nc).unwrap();
-    stop(nc);
+    // stop(nc);
 }
 
 fn init(nc: &mut Nc) -> NcResult<NcDim>{

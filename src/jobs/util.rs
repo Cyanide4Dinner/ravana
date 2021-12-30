@@ -319,6 +319,7 @@ pub mod key_bindings {
     // pub type KeyCombination = Vec<Key>;
 
     #[cfg_attr(test, derive(Debug))]
+    #[cfg_attr(feature = "dev", derive(Debug))]
     #[derive(Eq)]
     pub struct KeyCombination(pub Vec<Key>);
     impl PartialEq for KeyCombination {
