@@ -23,10 +23,9 @@ toml = "0.5.8"
 serde = "1.0.130"
 log = "0.4.14"
 async-trait = "0.1.51"
-radix_trie = "0.2.1"
 phf = { version = "0.9", features = ["macros"] }
 env_logger = "0.8.4"
-nix = "0.23.1"
+sequence_trie = "0.3.6"
 
 [dev-dependencies]
 # libnotcurses-sys = {version = "2.4.5", path = "../../Repos/libnotcurses-sys"}

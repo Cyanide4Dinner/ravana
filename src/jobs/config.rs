@@ -40,10 +40,10 @@ pub async fn create_key_bindings_trie(kb: &HashMap<String, String>) -> Result<Ke
     let mut kb_trie: KeyBindingsTrie = KeyBindingsTrie::new();
     for (&key, &def_val) in DEFAULT_KEY_BINDINGS.entries() {
         if let Some(val) = kb.get(key) {
-            kb_trie.insert(parse_to_key_combination(val)?, get_user_event(key)?);
+            kb_trie.insert_owned(parse_to_key_combination(val)?, get_user_event(key)?);
         }  
         else {
-            kb_trie.insert(parse_to_key_combination(def_val)?, get_user_event(key)?);
+            kb_trie.insert_owned(parse_to_key_combination(def_val)?, get_user_event(key)?);
         }
     }
     Ok(kb_trie)
@@ -90,7 +90,7 @@ fn parse_to_key_combination(key_comb_str: &str) -> Result<KeyCombination> {
         }
     }
     if is_special_key { return Err(anyhow!("Invalid key-binding format {}", key_comb_str)); }
-    Ok(KeyCombination(key_comb))
+    Ok(key_comb)
 }
 
 #[cfg(test)]
@@ -120,46 +120,46 @@ mod tests {
     // Test parse_to_key_combination parses key combination strings to Key enum variants proper.
     #[test]
     fn test_parse_to_key_combination() {
-        let key_comb1: KeyCombination = KeyCombination(vec!{
+        let key_comb1: KeyCombination = vec!{
             Key::HoldCtrl,
             Key::KeyB
-        });
+        };
         assert_eq!(key_comb1, parse_to_key_combination("<C-b>").unwrap());
 
-        let key_comb2: KeyCombination = KeyCombination(vec!{
+        let key_comb2: KeyCombination = vec!{
             Key::KeyEsc,
-        }); 
+        }; 
         assert_eq!(key_comb2, parse_to_key_combination("<Esc>").unwrap());
 
-        let key_comb3: KeyCombination = KeyCombination(vec!{
+        let key_comb3: KeyCombination = vec!{
             Key::HoldCtrl,
             Key::KeyTab
-        });
+        };
         assert_eq!(key_comb3, parse_to_key_combination("<C-Tab>").unwrap());
 
-        let key_comb4: KeyCombination = KeyCombination(vec!{
+        let key_comb4: KeyCombination = vec!{
             Key::HoldCtrl,
             Key::KeyA,
             Key::KeyG
-        });
+        };
         assert_eq!(key_comb4, parse_to_key_combination("<C-a>g").unwrap());
 
-        let key_comb5: KeyCombination = KeyCombination(vec!{
+        let key_comb5: KeyCombination = vec!{
             Key::KeyG,
             Key::KeyG
-        });
+        };
         assert_eq!(key_comb5, parse_to_key_combination("gg").unwrap());
 
-        let key_comb6: KeyCombination = KeyCombination(vec!{
+        let key_comb6: KeyCombination = vec!{
             Key::KeySpace,
             Key::KeyX
-        });
+        };
         assert_eq!(key_comb6, parse_to_key_combination("<Space>x").unwrap());
 
-        let key_comb7: KeyCombination = KeyCombination(vec!{
+        let key_comb7: KeyCombination = vec!{
             Key::KeyG,
             Key::KeyEsc
-        });
+        };
         assert_eq!(key_comb7, parse_to_key_combination("g<Esc>").unwrap());
     }
 }

@@ -1,4 +1,4 @@
-use anyhow::{ Context, Result };
+use anyhow::{ Result };
 use libnotcurses_sys::{
     Nc,
     NcInput,
@@ -13,7 +13,7 @@ use crate::jobs::{ Config, config::create_key_bindings_trie, Key, KeyBindingsTri
 
 pub async fn init(nc: Arc<Mutex<&mut Nc>>, config: Arc<Config>) -> Result<()> {
     info!("Init input listener.");
-    let kbt =  create_key_bindings_trie(&config.key_bindings).await.context("Error parsing key-bindings.")?;
+    let kbt = create_key_bindings_trie(&config.key_bindings).await.context("Error parsing key-bindings.")?;
     listen(nc, kbt).await?;
     Ok(())
 }
@@ -28,10 +28,10 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> Result<()> {
         let mut input_details = NcInput::new_empty();
         let recorded_input = nc_lock.get(Some(NcTime::new(0, 500000000)), Some(&mut input_details))?; // Block for 0.5 second.
         drop(nc_lock); // Release the lock.
-        if let Some(key) = gen_key(&recorded_input, &input_details) {
+        if let Some(mut key) = gen_key(&recorded_input, &input_details) {
             println!("Key: {:?}", key);
-            buffer.push_key_comb(key); 
-            if let None = kbt.get_raw_descendant(&buffer) { 
+            buffer.append(&mut key); 
+            if let None = kbt.get_node(&buffer) { 
                 println!("Wrong path.");
                 println!("Buffer now: {:?}", buffer);
                 buffer.clear();
@@ -90,7 +90,7 @@ fn gen_key(ncr: &NcReceived, id: &NcInput) -> Option<KeyCombination> {
                     _ => { warn!{"Found no key matching char: {}", ch}; return None; }  
                 }
             }
-            return Some(KeyCombination(key_comb_vec));
+            return Some(key_comb_vec);
         },
         NcReceived::Event(key) => {
             match key { 
@@ -123,7 +123,7 @@ fn gen_key(ncr: &NcReceived, id: &NcInput) -> Option<KeyCombination> {
                 &NcKey::PGDOWN => { key_comb_vec.push(Key::KeyPageDown); },
                 _ => { warn!("Found no key matching for event."); return None; }
             }
-            return Some(KeyCombination(key_comb_vec));
+            return Some(key_comb_vec);
         },
         _ => { warn!{"Found neither NcRecieved::Char nor NcRecieved::Event for input."}; }
     }

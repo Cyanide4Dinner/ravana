@@ -5,7 +5,7 @@ pub mod config {
     use super::key_bindings::DEFAULT_KEY_BINDINGS;
 
     #[derive(Deserialize, Debug, PartialEq, Eq)]
-    #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
+    #[serde(rename_all(deserialize = "kebab-case"))]
     pub struct Config {
         pub key_bindings: HashMap<String, String>
     }
@@ -23,47 +23,20 @@ pub mod config {
             }
         }
     }
-    // pub struct KeyBinding {
-    //     pub key_comb_str: String,
-    //     pub event: Box<dyn UserEvent>
-    // }
-    // pub static DEFAULT_KEY_BINDINGS: Map<&'static str, KeyBinding> = phf_map! {
-    //    "app_quit" => KeyBinding { key_comb_str: "zz".to_owned(), event: Box::new(user_events::AppQuit) }
-    // };
-
-    // lazy_static! {
-    //     pub static ref default_key_bindings: HashMap<&'static str, KeyBinding> = HashMap::from([
-    //         ("app_quit", KeyBinding { key_comb_str: "zz".to_owned(), event: Box::new(user_events::AppQuit) })
-    //     ]);
-    // }
-    
-    // #[derive(Deserialize, Debug, PartialEq, Eq)]
-    // #[serde(default)]
-    // pub struct KeyBindings {
-    //     pub app_quit: String,
-    // }
-    //
-    // impl Default for KeyBindings {
-    //     fn default() -> KeyBindings {
-    //         KeyBindings {
-    //             app_quit: "ZZ".to_string()
-    //         }
-    //     }
-    // }
 }
 
 pub mod key_bindings {
-    use anyhow::{ anyhow, Context, Result };
-    use phf::{ phf_map, Map };
-    use radix_trie::{ Trie, TrieKey };
+    use anyhow::{ anyhow, Result };
     #[cfg(test)]
     use enum_iterator::IntoEnumIterator;
+    use phf::{ phf_map, Map };
+    use sequence_trie::{ SequenceTrie, TrieKey };
 
     use crate::events::UserEvent;
     
     // Supported keys
     #[cfg_attr(test, derive(IntoEnumIterator))]
-    #[derive(Clone, Debug, Eq, PartialEq)]
+    #[derive(Clone, Debug, Eq, Hash, PartialEq)]
     pub enum Key {
         KeyA,
         KeyB,
@@ -255,45 +228,10 @@ pub mod key_bindings {
         "debug_test_hello" => "gg"
     };
 
-    #[cfg_attr(test, derive(Debug))]
-    #[cfg_attr(feature = "dev", derive(Debug))]
-    #[derive(Eq)]
-    pub struct KeyCombination(pub Vec<Key>);
-    impl KeyCombination {
-        pub fn new() -> KeyCombination {
-            KeyCombination(Vec::new())
-        }
-
-        pub fn push_key(&mut self, key: Key) {
-           self.0.push(key); 
-        }
-
-        pub fn push_key_comb(&mut self, key_comb: KeyCombination) {
-            self.0.append(&mut key_comb.0.clone())
-        }
-        
-        pub fn clear(&mut self) {
-            self.0.clear();
-        }
-    }
-    impl PartialEq for KeyCombination {
-        fn eq(&self, other: &Self) -> bool {
-            assert_eq!(self.0.iter().eq(other.0.iter()), true);
-            true
-        }
-    }
-    impl TrieKey for KeyCombination {
-        fn encode_bytes(&self) -> Vec<u8> {
-            let mut key_code_vec: Vec<u8> = Vec::new();
-            for key in &self.0 {
-                key_code_vec.push(key_to_code(key).context(format!("key_to_code unable to find code for {:?}", key)).unwrap())
-            }
-            key_code_vec
-        }
-    }
+    pub type KeyCombination = Vec<Key>;
 
     //TODO: Add support for leader key.
-    pub type KeyBindingsTrie = Trie<KeyCombination, Box<dyn UserEvent>>;
+    pub type KeyBindingsTrie = SequenceTrie<Key, Box<dyn UserEvent>>;
 }
 
 #[cfg(test)]
@@ -301,7 +239,7 @@ mod tests {
     use anyhow::{ anyhow, Result };
     use enum_iterator::IntoEnumIterator;
     use std::{
-        collections::{ HashMap, HashSet },
+        collections::{ HashMap },
         fs::File,
         io::prelude::*,
         path::Path
