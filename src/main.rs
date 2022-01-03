@@ -8,6 +8,7 @@ mod tui;
 mod events;
 pub mod jobs;
 pub mod input;
+pub mod state;
 
 
 #[tokio::main]

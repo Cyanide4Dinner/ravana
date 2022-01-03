@@ -1,40 +1,57 @@
-use anyhow::{ anyhow, Context, Result };
+use anyhow::{ Context, Result };
 use libnotcurses_sys::{
     Nc,
     NcInput,
     NcKey,
     NcReceived,
-    NcResult
+    NcTime
 }; 
 use log::{ info, warn };
-use std::sync::{ Arc, Mutex };
+use std::{ sync::{ Arc, Mutex } };
 
 use crate::jobs::{ Config, config::create_key_bindings_trie, Key, KeyBindingsTrie, KeyCombination  };
 
 pub async fn init(nc: Arc<Mutex<&mut Nc>>, config: Arc<Config>) -> Result<()> {
     info!("Init input listener.");
     let kbt =  create_key_bindings_trie(&config.key_bindings).await.context("Error parsing key-bindings.")?;
-    listen(nc, kbt)?;
+    listen(nc, kbt).await?;
     Ok(())
 }
 
+//TODO: Create tests for event loop checking and ensuring.
 //TODO: Use file descriptor IO multiplexing for waiting for input. (see notcurses_inputready_fd)
-fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> Result<()> {
-    info!("Begin input listening loops.");
+async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> Result<()> {
+    info!("Begin input listening loop.");
+    let mut buffer: KeyCombination = KeyCombination::new();
     loop {
         let mut nc_lock = nc.lock().unwrap(); // Lock Nc instance.
         let mut input_details = NcInput::new_empty();
-        let recorded_input = nc_lock.get_blocking(Some(&mut input_details))?;
+        let recorded_input = nc_lock.get(Some(NcTime::new(0, 500000000)), Some(&mut input_details))?; // Block for 0.5 second.
         drop(nc_lock); // Release the lock.
-
-        if let Some(key_comb) = gen_key_comb(&recorded_input, &input_details) {
-            println!("Key combination: {:?}", key_comb);
+        if let Some(key) = gen_key(&recorded_input, &input_details) {
+            println!("Key: {:?}", key);
+            buffer.push_key_comb(key); 
+            if let None = kbt.get_raw_descendant(&buffer) { 
+                println!("Wrong path.");
+                println!("Buffer now: {:?}", buffer);
+                buffer.clear();
+            }
+            else {
+                if let Some(ue) = kbt.get(&buffer) {
+                    println!("Match!");
+                    ue.trigger().await;
+                    buffer.clear();
+                }
+                else {
+                    println!("Correct path in trie but no match.");
+                }
+            }
         }
     }
 } 
 
 //TODO: Test function to see if all keys are covered and all possibilities handled.
-fn gen_key_comb(ncr: &NcReceived, id: &NcInput) -> Option<KeyCombination> {
+fn gen_key(ncr: &NcReceived, id: &NcInput) -> Option<KeyCombination> {
     if id.evtype == 3 { return None; } // Ignore Kitty release events.
     let mut key_comb_vec: Vec<Key> = Vec::new();
     if id.ctrl {key_comb_vec.push(Key::HoldCtrl); }
