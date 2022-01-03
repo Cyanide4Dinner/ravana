@@ -32,3 +32,4 @@
 
 # Application
 app_quit						= "zz"					# Quit
+debug_test_hello		= "gg"

@@ -185,68 +185,6 @@ pub mod key_bindings {
         "M" => Key::HoldAlt,
     };
 
-    // pub(super) fn code_to_key(code: &u8) -> Result<Key> {
-    //     match code {
-    //         0x01u8 => Ok(Key::KeyA),
-    //         0x02u8 => Ok(Key::KeyB),
-    //         0x03u8 => Ok(Key::KeyC),
-    //         0x04u8 => Ok(Key::KeyD),
-    //         0x05u8 => Ok(Key::KeyE),
-    //         0x06u8 => Ok(Key::KeyF),
-    //         0x07u8 => Ok(Key::KeyG),
-    //         0x08u8 => Ok(Key::KeyH),
-    //         0x09u8 => Ok(Key::KeyI),
-    //         0x0au8 => Ok(Key::KeyJ),
-    //         0x0bu8 => Ok(Key::KeyJ),
-    //         0x0cu8 => Ok(Key::KeyK),
-    //         0x0du8 => Ok(Key::KeyL),
-    //         0x0eu8 => Ok(Key::KeyM),
-    //         0x0fu8 => Ok(Key::KeyN),
-    //         0x10u8 => Ok(Key::KeyO),
-    //         0x10u8 => Ok(Key::KeyP),
-    //         0x11u8 => Ok(Key::KeyQ),
-    //         0x12u8 => Ok(Key::KeyR),
-    //         0x13u8 => Ok(Key::KeyS),
-    //         0x14u8 => Ok(Key::KeyT),
-    //         0x15u8 => Ok(Key::KeyU),
-    //         0x16u8 => Ok(Key::KeyV),
-    //         0x17u8 => Ok(Key::KeyW),
-    //         0x18u8 => Ok(Key::KeyX),
-    //         0x19u8 => Ok(Key::KeyY),
-    //         0x1au8 => Ok(Key::KeyZ),
-    //         0x1bu8 => Ok(Key::KeyEnter),
-    //         0x1cu8 => Ok(Key::KeyEsc),
-    //         0x1du8 => Ok(Key::KeySpace),
-    //         0x1eu8 => Ok(Key::KeyBackspace),
-    //         0x1fu8 => Ok(Key::KeyTab),
-    //         0x20u8 => Ok(Key::KeyUp),
-    //         0x21u8 => Ok(Key::KeyDown),
-    //         0x22u8 => Ok(Key::KeyLeft),
-    //         0x23u8 => Ok(Key::KeyRight),
-    //         0x24u8 => Ok(Key::KeyF1),
-    //         0x25u8 => Ok(Key::KeyF2),
-    //         0x26u8 => Ok(Key::KeyF3),
-    //         0x27u8 => Ok(Key::KeyF4),
-    //         0x28u8 => Ok(Key::KeyF5),
-    //         0x29u8 => Ok(Key::KeyF6),
-    //         0x2au8 => Ok(Key::KeyF7),
-    //         0x2bu8 => Ok(Key::KeyF8),
-    //         0x2cu8 => Ok(Key::KeyF9),
-    //         0x2du8 => Ok(Key::KeyF10),
-    //         0x2eu8 => Ok(Key::KeyF11),
-    //         0x2fu8 => Ok(Key::KeyF12),
-    //         0x30u8 => Ok(Key::KeyInsert),
-    //         0x31u8 => Ok(Key::KeyDel),
-    //         0x32u8 => Ok(Key::KeyHome),
-    //         0x33u8 => Ok(Key::KeyEnd),
-    //         0x34u8 => Ok(Key::KeyPageUp),
-    //         0x35u8 => Ok(Key::KeyPageDown),
-    //         0x36u8 => Ok(Key::HoldCtrl),
-    //         0x37u8 => Ok(Key::HoldShift),
-    //         0x38u8 => Ok(Key::HoldAlt),
-    //         _ => Err(anyhow!("Invalid u8 key code: {}", code))
-    //     }
-    // }
 
     #[allow(unreachable_patterns)]
     pub(super) fn key_to_code(key: &Key) -> Result<u8> {
@@ -313,15 +251,31 @@ pub mod key_bindings {
 
     // Default map for key-bindings ( field-name -> key-binding )
     pub const DEFAULT_KEY_BINDINGS: Map<&'static str, &'static str> = phf_map!{
-        "app_quit" => "zz" 
+        "app_quit" => "zz",
+        "debug_test_hello" => "gg"
     };
-
-    // pub type KeyCombination = Vec<Key>;
 
     #[cfg_attr(test, derive(Debug))]
     #[cfg_attr(feature = "dev", derive(Debug))]
     #[derive(Eq)]
     pub struct KeyCombination(pub Vec<Key>);
+    impl KeyCombination {
+        pub fn new() -> KeyCombination {
+            KeyCombination(Vec::new())
+        }
+
+        pub fn push_key(&mut self, key: Key) {
+           self.0.push(key); 
+        }
+
+        pub fn push_key_comb(&mut self, key_comb: KeyCombination) {
+            self.0.append(&mut key_comb.0.clone())
+        }
+        
+        pub fn clear(&mut self) {
+            self.0.clear();
+        }
+    }
     impl PartialEq for KeyCombination {
         fn eq(&self, other: &Self) -> bool {
             assert_eq!(self.0.iter().eq(other.0.iter()), true);
@@ -340,10 +294,6 @@ pub mod key_bindings {
 
     //TODO: Add support for leader key.
     pub type KeyBindingsTrie = Trie<KeyCombination, Box<dyn UserEvent>>;
-    // pub struct KeyBindingsTrie {
-    //     leader: Key,    
-    //     trie: Trie<KeyCombination, Box<dyn UserEvent>>
-    // }
 }
 
 #[cfg(test)]

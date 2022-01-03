@@ -10,3 +10,15 @@ impl UserEvent for AppQuit {
         Ok(())
     }
 }
+
+// TODO: Create better solution for debug event.
+#[cfg(feature = "dev")]
+pub struct TestHello;
+#[cfg(feature = "dev")]
+#[async_trait]
+impl UserEvent for TestHello {
+    async fn trigger(&self) -> Result<()> {
+        println!("Hello <3.");
+        Ok(())
+    }
+}
