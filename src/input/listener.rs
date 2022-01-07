@@ -1,4 +1,4 @@
-use anyhow::{ Result };
+use anyhow::{ Context, Result };
 use libnotcurses_sys::{
     Nc,
     NcInput,
@@ -8,12 +8,16 @@ use libnotcurses_sys::{
 }; 
 use log::{ info, warn };
 use std::{ sync::{ Arc, Mutex } };
+use tokio::sync::mpsc::Sender;
 
+use crate::events::app_events::init_tui;
 use crate::jobs::{ Config, config::create_key_bindings_trie, Key, KeyBindingsTrie, KeyCombination  };
+use crate::state::Message;
 
-pub async fn init(nc: Arc<Mutex<&mut Nc>>, config: Arc<Config>) -> Result<()> {
+pub async fn init(nc: Arc<Mutex<&mut Nc>>, config: Arc<Config>, mpsc_send: Sender<Message>) -> Result<()> {
     info!("Init input listener.");
     let kbt = create_key_bindings_trie(&config.key_bindings).await.context("Error parsing key-bindings.")?;
+    init_tui(mpsc_send.clone()).await?; 
     listen(nc, kbt).await?;
     Ok(())
 }
@@ -29,16 +33,12 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> Result<()> {
         let recorded_input = nc_lock.get(Some(NcTime::new(0, 500000000)), Some(&mut input_details))?; // Block for 0.5 second.
         drop(nc_lock); // Release the lock.
         if let Some(mut key) = gen_key(&recorded_input, &input_details) {
-            println!("Key: {:?}", key);
             buffer.append(&mut key); 
             if let None = kbt.get_node(&buffer) { 
-                println!("Wrong path.");
-                println!("Buffer now: {:?}", buffer);
                 buffer.clear();
             }
             else {
                 if let Some(ue) = kbt.get(&buffer) {
-                    println!("Match!");
                     ue.trigger().await;
                     buffer.clear();
                 }
@@ -125,7 +125,6 @@ fn gen_key(ncr: &NcReceived, id: &NcInput) -> Option<KeyCombination> {
             }
             return Some(key_comb_vec);
         },
-        _ => { warn!{"Found neither NcRecieved::Char nor NcRecieved::Event for input."}; }
+        _ => { return None; }
     }
-    None
 }
