@@ -247,7 +247,6 @@ pub mod key_bindings {
     // Default map for key-bindings ( field-name -> key-binding )
     pub const DEFAULT_KEY_BINDINGS: Map<&'static str, &'static str> = phf_map!{
         "app_quit" => "zz",
-        "debug_test_hello" => "gg"
     };
 
     pub type KeyCombination = Vec<Key>;

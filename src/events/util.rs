@@ -13,7 +13,6 @@ pub trait UserEvent {
 pub fn get_user_event(field_name: &str) -> Result<Box<dyn UserEvent>> {
     match field_name {
         "app_quit" => { Ok(Box::new(user_events::AppQuit)) },
-        "debug_test_hello" => { Ok(Box::new(user_events::TestHello)) },
         _ =>  { Err(anyhow!("Cannot find UserEvent corresponding to: {}", field_name)) },
     }
 }
