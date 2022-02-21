@@ -42,9 +42,6 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> Result<()> {
                     ue.trigger().await;
                     buffer.clear();
                 }
-                else {
-                    println!("Correct path in trie but no match.");
-                }
             }
         }
     }
