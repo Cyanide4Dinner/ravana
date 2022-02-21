@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use crate::def::app::CONFIG_DIR_PATHS;
 use crate::events::get_user_event;
 use super::util::{
-    config::{ Config },
+    config::{ Config, ThemeDes, TUIPrefsDes },
     key_bindings::{ DEFAULT_KEY_BINDINGS, Key, KeyBindingsTrie, KeyCombination, STRING_TO_KEYS }
 };
 
@@ -97,21 +97,30 @@ fn parse_to_key_combination(key_comb_str: &str) -> Result<KeyCombination> {
 mod tests {
     use std::collections::HashMap;
 
-    use super::{ Config, Key, KeyCombination, deserialize_toml, parse_to_key_combination  };
-
-    // Test deserialize_toml deserializes toml proper.
+    use super::{ Config, Key, KeyCombination, deserialize_toml, parse_to_key_combination, ThemeDes, TUIPrefsDes  };
+// Test deserialize_toml deserializes toml proper.
     #[test]
     fn test_deserialize_toml() {
         let res_config: Config = deserialize_toml(r#"
             [key-bindings]
             app_quit = "abcdefghi"
+
+            [tui]
+            theme.highlight-fg= "222222"
+            theme.highlight-bg= "333333"
         "#).unwrap();
         // let mut exp_config = Config::default();
         // exp_config.key_bindings.app_quit = "ABCDEFGHIJ".to_owned();
         assert_eq!(res_config, Config {
             key_bindings: HashMap::from([
                 ("app_quit".to_owned(), "abcdefghi".to_owned())
-            ])
+            ]),
+            tui: TUIPrefsDes {
+                theme: ThemeDes {
+                    highlight_fg: "222222".to_string(),
+                    highlight_bg: "333333".to_string()
+                }
+            }
         });
         // exp_config.key_bindings.app_quit = "ABC".to_owned();
         // assert_ne!(res_config, exp_config);

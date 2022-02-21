@@ -14,11 +14,16 @@ pub async fn init() -> Result<()> {
     let config = Arc::new(load_config().await);
     let nc = Arc::new(Mutex::new(unsafe { Nc::new()? }));
     
-    // let mut nc_lock = nc.lock().unwrap();
-    // let stdp = unsafe { nc_lock.stdplane() };
-    // stdp.putstrln("Hello world.")?;
-    // nc_lock.render()?;
-    // drop(nc_lock);
+    // tokio::spawn(listen_init(Arc::clone(&nc), config.clone()));
+    // listen_init(Arc::clone(&nc), Arc::clone(&config)).await.unwrap();
+    Ok(()) 
+}
+
+pub fn test_tui() -> NcResult<()> {
+    //Testing
+    let nc = unsafe { Nc::new()? };
+    let splane = unsafe { nc.stdplane() };
+    splane.set_scrolling(true);
 
     // tokio::spawn(manager_init(Arc::clone(&nc)));
 

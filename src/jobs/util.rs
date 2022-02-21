@@ -4,10 +4,26 @@ pub mod config {
 
     use super::key_bindings::DEFAULT_KEY_BINDINGS;
 
+    // Theme deserialized.
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
+    pub struct ThemeDes {
+        pub highlight_fg: String,
+        pub highlight_bg: String
+    }
+
+    // TUI Prefs deserialized.
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
+    pub struct TUIPrefsDes {
+        pub theme: ThemeDes
+    }
+
     #[derive(Deserialize, Debug, PartialEq, Eq)]
     #[serde(rename_all(deserialize = "kebab-case"))]
     pub struct Config {
-        pub key_bindings: HashMap<String, String>
+        pub key_bindings: HashMap<String, String>,
+        pub tui: TUIPrefsDes 
     }
     
     //TODO: Resolve default configuration from default Config.toml directly - for cases where
@@ -19,7 +35,13 @@ pub mod config {
                 default_key_bindings.insert(key.to_owned(), value.to_owned());
             }
             Config {
-                key_bindings: default_key_bindings
+                key_bindings: default_key_bindings,
+                tui: TUIPrefsDes {
+                    theme: ThemeDes {
+                        highlight_fg: "#111111".to_string(),
+                        highlight_bg: "#111111".to_string()
+                    }
+                }
             }
         }
     }

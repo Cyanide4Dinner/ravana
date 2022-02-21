@@ -8,28 +8,24 @@ edition = "2018"
 
 [dependencies]
 # libnotcurses-sys = { git = "https://github.com/dankamongmen/libnotcurses-sys" }
-libnotcurses-sys = "3.0.0"
-# libnotcurses-sys = "3.0.0"
+libnotcurses-sys = "= 3.1.1"
 reqwest = { version = "0.11", default-features = false, features = [
 "rustls-tls",
 "json"
 ] }
-tokio = { version = "1", features = ["macros", "sync"] }
+tokio = { version = "1", features = ["full"] }
 oauth2 = "4.1.0"
 url = "2.2.2"
 anyhow = "1.0.49"
 thiserror = "1.0.30"
 toml = "0.5.8"
+filedescriptor = "0.8.1"
 serde = "1.0.130"
 log = "0.4.14"
 async-trait = "0.1.51"
+radix_trie = "0.2.1"
 phf = { version = "0.9", features = ["macros"] }
-env_logger = "0.8.4"
-sequence_trie = "0.3.6"
 
 [dev-dependencies]
 # libnotcurses-sys = {version = "2.4.5", path = "../../Repos/libnotcurses-sys"}
 enum-iterator = "0.7.0"
-
-[features]
-dev = []

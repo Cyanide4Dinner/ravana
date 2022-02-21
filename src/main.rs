@@ -10,7 +10,6 @@ pub mod jobs;
 pub mod input;
 pub mod state;
 
-
 #[tokio::main]
 async fn main(){
     env_logger::init();
