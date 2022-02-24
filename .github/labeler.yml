@@ -8,3 +8,7 @@ api:
   - 'src/api/**/*'
 documentation:
   - 'docs/**/*'
+events:
+  - 'events/**/*'
+state:
+  - 'state/**/*'

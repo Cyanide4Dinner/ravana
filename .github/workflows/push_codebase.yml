@@ -1,9 +1,9 @@
 name: push_codebase
 on:
-  # push:
-  #   branches: [ main ]
-  pull_request:
+  push:
     branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
 env:
   CARGO_TERM_COLOR: always
 jobs:
@@ -37,7 +37,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: dankamongmen/notcurses
-          token: ${{ github.token }}
           path: notcurses
           fetch-depth: 0
       - name: "Notcurses CMake"
@@ -65,11 +64,6 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-      # - name: "Run cargo clippy"
-      #   uses: actions-rs/clippy-check@v1
-      #   with:
-      #     token: ${{ github.token }}
-      #     args: --no-deps
       - name: "Ravana build"
         run: cargo build --verbose
       - name: "Ravana test"
@@ -83,3 +77,11 @@ jobs:
         uses: crate-ci/typos@master
         with:
           files: docs/**.md
+  other:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Update diagram
+      uses: githubocto/repo-visualizer@0.7.1
+      with:
+        output_file: "docs/repo_visualize.svg"

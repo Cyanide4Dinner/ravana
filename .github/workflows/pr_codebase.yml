@@ -1,9 +1,9 @@
 name: pr_codebase
 on:
-  push:
-    branches: [ main ]
-  # pull_request:
+  # push:
   #   branches: [ main ]
+  pull_request:
+    branches: [ main ]
 env:
   CARGO_TERM_COLOR: always
 jobs:
@@ -85,11 +85,6 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-      # - name: "Run cargo clippy"
-      #   uses: actions-rs/clippy-check@v1
-      #   with:
-      #     token: ${{ github.token }}
-      #     args: --no-deps
       - name: "Ravana build"
         run: cargo build --verbose
       - name: "Ravana test"
