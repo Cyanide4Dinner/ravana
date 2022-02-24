@@ -89,14 +89,3 @@ jobs:
         run: cargo build --verbose
       - name: "Ravana test"
         run: cargo test --verbose --no-fail-fast
-  docs:
-    needs: changes
-    if: ${{ needs.changes.outputs.docs == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Check spelling of .md files
-        uses: crate-ci/typos@master
-        with:
-          files: docs/**.md
