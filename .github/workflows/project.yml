@@ -1,0 +1,19 @@
+name: project
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  project:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v3
+        name: Label PR
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+      - uses: actions/checkout@v2
+      - name: TODO to Issue
+        uses: alstr/todo-to-issue-action@v4.5
+        id: todo
+      - name: Run Changelog CI
+        uses: saadmk11/changelog-ci@v1.0.0
