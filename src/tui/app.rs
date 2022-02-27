@@ -7,10 +7,12 @@ use libnotcurses_sys::{
 use log::{ error, info };
 use std::sync::{ Arc, Mutex };
 
+use crate::tui::TuiPrefs;
 use super::page::{ Page, PageProps, PageType };
 
 pub struct App<'a> {
    nc: Arc<Mutex<&'a mut Nc>>,
+   tui_prefs: TuiPrefs,
    app_plane: &'a mut NcPlane,
    pub dim_x: u32, 
    pub dim_y: u32,
@@ -18,7 +20,7 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new(nc: Arc<Mutex<&mut Nc>>) -> App {
+    pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs) -> App<'b> {
         let mut nc_lock = nc.lock().unwrap();
         let stdplane = unsafe { nc_lock.stdplane() }; 
         let (dim_x, dim_y) = nc_lock.term_dim_yx();
@@ -26,6 +28,7 @@ impl<'a> App<'a> {
 
         App {
             nc: nc,
+            tui_prefs: tui_prefs,
             app_plane: stdplane,
             dim_x: dim_x,
             dim_y: dim_y,
