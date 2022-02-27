@@ -11,12 +11,18 @@ use std::{ sync::{ Arc, Mutex } };
 use tokio::sync::mpsc::Sender;
 
 use crate::events::app_events::init_tui;
-use crate::jobs::{ Config, config::create_key_bindings_trie, Key, KeyBindingsTrie, KeyCombination  };
+use crate::jobs::{ Config };
 use crate::state::Message;
+use super::utils::key_bindings::{ 
+    create_key_bindings_trie,
+    Key,
+    KeyBindingsTrie,
+    KeyCombination,
+};
 
 pub async fn init(nc: Arc<Mutex<&mut Nc>>, config: Arc<Config>, mpsc_send: Sender<Message>) -> Result<()> {
     info!("Init input listener.");
-    let kbt = create_key_bindings_trie(&config.key_bindings).await.context("Error parsing key-bindings.")?;
+    let kbt = create_key_bindings_trie(&config.key_bindings).context("Error parsing key-bindings.")?;
     init_tui(mpsc_send.clone()).await?; 
     listen(nc, kbt).await?;
     Ok(())
