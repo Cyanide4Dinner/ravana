@@ -10,7 +10,7 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
 
     // Check color format
     let val_color_fmt = |s: &str| -> bool {
-        let res = true;
+        let mut res = true;
         res = res && s.len() == 7;
         let mut chars = s.chars();
         res = res && Some('#') == chars.next();
@@ -23,11 +23,11 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
         res
     };
         
-    let res = true;
+    let mut res = true;
 
     // Check theme
     {
-        let theme = tui_prefs_des.theme;
+        let theme = &tui_prefs_des.theme;
         let mut temp_bool: bool;
 
         temp_bool = val_color_fmt(&theme.highlight_fg);
@@ -55,11 +55,11 @@ pub struct Color {
 
 impl Color {
     fn get_color_from_str(color_str: &str) -> Option<Color> {
-        let r: u8;
-        let g: u8;
-        let b: u8;
+        let mut r: u8;
+        let mut g: u8;
+        let mut b: u8;
 
-        let chars = color_str.chars();
+        let mut chars = color_str.chars();
 
         r = chars.next()?.to_digit(16)?.to_le_bytes()[0];
         r = r*16 + chars.next()?.to_digit(16)?.to_le_bytes()[0];
@@ -93,9 +93,9 @@ impl TuiPrefs {
             TuiPrefs {
                 theme: Theme {
                     highlight_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.highlight_fg) 
-                        { color } else { return anyhow!("Invalid color format.") },
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
                     highlight_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.highlight_bg) 
-                        { color } else { return anyhow!("Invalid color format.") }
+                        { color } else { return Err(anyhow!("Invalid color format.")); }
                 }
             }
         )

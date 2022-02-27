@@ -20,7 +20,7 @@ pub async fn init() -> Result<()> {
         info!("Validating config.");
         if !val_tui_prefs_des(&config.tui) { 
             error!("Invalid TUI format in config.");
-            anyhow!("Invalid TUI format in config.")
+            return Err(anyhow!("Invalid TUI format in config."));
         } 
     }
 
