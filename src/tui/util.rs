@@ -14,12 +14,12 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
         res = res && s.len() == 7;
         let mut chars = s.chars();
         res = res && Some('#') == chars.next();
-        res = res && chars.next().map_or(false, |c: char| c.is_ascii_digit() );
-        res = res && chars.next().map_or(false, |c: char| c.is_ascii_digit() );
-        res = res && chars.next().map_or(false, |c: char| c.is_ascii_digit() );
-        res = res && chars.next().map_or(false, |c: char| c.is_ascii_digit() );
-        res = res && chars.next().map_or(false, |c: char| c.is_ascii_digit() );
-        res = res && chars.next().map_or(false, |c: char| c.is_ascii_digit() );
+        res = res && chars.next().map_or(false, |c: char| c.is_ascii_hexdigit() );
+        res = res && chars.next().map_or(false, |c: char| c.is_ascii_hexdigit() );
+        res = res && chars.next().map_or(false, |c: char| c.is_ascii_hexdigit() );
+        res = res && chars.next().map_or(false, |c: char| c.is_ascii_hexdigit() );
+        res = res && chars.next().map_or(false, |c: char| c.is_ascii_hexdigit() );
+        res = res && chars.next().map_or(false, |c: char| c.is_ascii_hexdigit() );
         res
     };
         
@@ -32,13 +32,13 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
 
         temp_bool = val_color_fmt(&theme.highlight_fg);
         if !temp_bool {
-            error!("Wrong color format for {} {}", "theme", "highlight_fg");
+            error!("Wrong color format for {} {} - {}", "theme", "highlight_fg", theme.highlight_fg);
         }
         res = res && temp_bool;
 
         temp_bool = val_color_fmt(&theme.highlight_bg);
         if !temp_bool {
-            error!("Wrong color format for {} {}", "theme", "highlight_bg");
+            error!("Wrong color format for {} {} - {}", "theme", "highlight_bg", theme.highlight_bg);
         }
         res = res && temp_bool;
     }

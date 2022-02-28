@@ -5,6 +5,8 @@ use libnotcurses_sys::{
     NcAlign,
 };
 
+use super::page::{ Page, PageProps };
+
 pub struct SubListPostProps {
     pub dim_y: u32,
     pub dim_x: u32
@@ -51,19 +53,25 @@ pub struct SubListPage<'a> {
     data: SubListData<'a>
 }
 
-impl<'a> SubListPage<'a> {
-    pub fn new<'b>(app_page: &'b mut NcPlane, sl_page_props: SubListPageProps) -> Result<Box<SubListPage<'a>>> {
-        let base_plane = NcPlane::new_child(app_page, &NcPlaneOptions::new(0, 0, sl_page_props.dim_y, sl_page_props.dim_x))?;
+impl Page for SubListPage<'_> {
+    fn draw(&self) -> Result<()> {
+        Ok(()) 
+    }
+}
 
-        let mut dummy_listing_post = SubListPost { 
-            heading: "Try Heading", 
-            content: "Try Content", 
+impl<'a> SubListPage<'a> {
+    pub fn new<'b>(app_page: &mut NcPlane, page_props: PageProps) -> Result<Box<SubListPage<'b>>> {
+        let base_plane = NcPlane::new_child(app_page, &NcPlaneOptions::new(0, 0, page_props.dim_y, page_props.dim_x))?;
+
+        let mut dummy_listing_post = SubListPost {
+            heading: "Try Heading",
+            content: "Try Content",
             upvotes: 0,
             username: "hi",
-            plane: NcPlane::new_child(base_plane, &NcPlaneOptions::new(0, 0, sl_page_props.dim_y/4, sl_page_props.dim_x))? };
+            plane: NcPlane::new_child(base_plane, &NcPlaneOptions::new(0, 0, page_props.dim_y/4, page_props.dim_x))? };
         dummy_listing_post.draw();
-        let dummmy_listing_data = SubListData { posts: vec!{dummy_listing_post} }; 
-        
+        let dummmy_listing_data = SubListData { posts: vec!{dummy_listing_post} };
+
         Ok(Box::new(SubListPage { base_plane: base_plane, subreddit_name: "Cyberpunk", data: dummmy_listing_data }))
     }
 }

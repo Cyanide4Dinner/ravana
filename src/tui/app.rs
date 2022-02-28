@@ -1,6 +1,7 @@
 use anyhow::{ anyhow, Context, Result };
 use libnotcurses_sys::{
     Nc,
+    NcAlign,
     NcPlane,
     NcPlaneOptions
 };
@@ -8,6 +9,7 @@ use log::{ error, info };
 use std::sync::{ Arc, Mutex };
 
 use crate::tui::TuiPrefs;
+use super::subreddit_listing_page::SubListPage;
 use super::page::{ Page, PageProps, PageType };
 
 pub struct App<'a> {
@@ -16,7 +18,7 @@ pub struct App<'a> {
    app_plane: &'a mut NcPlane,
    pub dim_x: u32, 
    pub dim_y: u32,
-   pub pages: Vec<Page<'a>>
+   pub pages: Vec<Box<dyn Page>>
 }
 
 impl<'a> App<'a> {
@@ -37,11 +39,11 @@ impl<'a> App<'a> {
     }
 
     pub fn add_page(&mut self, page_type: PageType) -> Result<()> {
-        self.pages.push(Page::new(self.app_plane, page_type, PageProps { dim_x: self.dim_x, dim_y: self.dim_y })?);
+        self.pages.push(SubListPage::new(self.app_plane, PageProps { dim_x: self.dim_x, dim_y: self.dim_y })?);
         Ok(())
     }
 
-    pub fn render(&self) -> Result<()> {
+    pub fn render(&mut self) -> Result<()> {
         if let Ok(mut nc_lock) = self.nc.lock() {
             nc_lock.render().context("Nc render failed.")?;
             info!("Rendered app.");
