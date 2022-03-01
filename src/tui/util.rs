@@ -47,6 +47,7 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
 }
 
 
+#[cfg_attr(test, derive(PartialEq, Debug))]
 pub struct Color {
     r: u8,
     g: u8,
@@ -60,6 +61,7 @@ impl Color {
         let mut b: u8;
 
         let mut chars = color_str.chars();
+        chars.next(); //Skipping through #
 
         r = chars.next()?.to_digit(16)?.to_le_bytes()[0];
         r = r*16 + chars.next()?.to_digit(16)?.to_le_bytes()[0];
@@ -89,6 +91,7 @@ pub struct TuiPrefs {
 
 impl TuiPrefs {
     pub fn gen_tui_prefs(tui_prefs_des: &TuiPrefsDes) -> Result<TuiPrefs> {
+        info!("Generating TUI Prefs.");
         Ok(
             TuiPrefs {
                 theme: Theme {
@@ -99,5 +102,27 @@ impl TuiPrefs {
                 }
             }
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Color;
+
+    #[test]
+    fn test_gen_color_from_str() {
+        assert_eq!(Some(Color {
+            r: 255u8,
+            g: 255u8,
+            b: 255u8
+        }), Color::get_color_from_str("#ffffff"));
+
+        assert_eq!(Some(Color {
+            r: 166u8,
+            g: 183u8,
+            b: 200u8
+        }), Color::get_color_from_str("#a6b7c8"));
+
+        assert_eq!(None, Color::get_color_from_str("#g6b7c6"));
     }
 }
