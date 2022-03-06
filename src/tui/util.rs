@@ -107,7 +107,15 @@ impl TuiPrefs {
     }
 }
 
-pub trait TuiWidget {
+pub trait Widget: Sized {
+    fn new(tui_prefs: &TuiPrefs,
+            plane: &mut NcPlane,
+            x: i32,
+            y: i32,
+            dim_x: u32,
+            dim_y: u32
+            ) -> Result<Self>;
+    fn draw(&mut self) -> Result<()>;
 }
 
 macro_rules! new_child_plane {

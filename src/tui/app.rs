@@ -12,7 +12,7 @@ use super::subreddit_listing_page::SubListPage;
 use super::{ page::{ Page, PageType },
                 subreddit_listing_page::{ SubListPostData },
                 util::new_child_plane,
-                TuiWidget };
+                Widget };
 
 pub struct App<'a> {
         nc: Arc<Mutex<&'a mut Nc>>,
@@ -42,13 +42,11 @@ impl<'a> App<'a> {
         match page_type {
             PageType::SubredditListing => {
                 let mut sub_list_page = SubListPage::new(&self.tui_prefs,
-                                                             new_child_plane!(
-                                                                self.plane,
-                                                                0,
-                                                                0,
-                                                                self.plane.dim_x(),
-                                                                self.plane.dim_y()
-                                                                )
+                                                            self.plane,
+                                                            0,
+                                                            0,
+                                                            self.plane.dim_x(),
+                                                            self.plane.dim_y()
                                                             )?;
                 sub_list_page.add_post(&self.tui_prefs, SubListPostData {
                     heading: "hadfafda",
@@ -56,7 +54,7 @@ impl<'a> App<'a> {
                     upvotes: 78,
                     username: "afhaldjf"
                 })?;
-                self.pages.push(sub_list_page);
+                self.pages.push(Box::new(sub_list_page));
             },
             PageType::Post => {  }
         }
@@ -77,5 +75,3 @@ impl<'a> App<'a> {
         Err(anyhow!("Failed to render app: unable to lock Nc."))
     }
 }
-
-impl TuiWidget for App<'_> {  }

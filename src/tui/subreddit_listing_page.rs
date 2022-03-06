@@ -5,7 +5,7 @@ use libnotcurses_sys::{
     NcAlign,
 };
 
-use super::{ Color, page::{ Page }, TuiPrefs, TuiWidget, util::new_child_plane };
+use super::{ Color, page::{ Page }, TuiPrefs, Widget, util::new_child_plane };
 
 pub struct SubListPostData<'a> {
     pub upvotes: u32,
@@ -20,17 +20,29 @@ pub struct SubListPost<'a> {
 }
 
 impl<'a> SubListPost<'a> {
-    pub fn new<'b>(tui_prefs: &TuiPrefs,
-                    plane: &'b mut NcPlane,
-                    data: SubListPostData<'b>
-                   ) -> Result<SubListPost<'b>> {
-        Ok(SubListPost {
-                plane: plane,
-                data: data
+    // Draw the plane (not render) using the properties.
+}
+
+impl<'a> Widget for SubListPost<'a> {
+    fn new(tui_prefs: &TuiPrefs,
+                    plane: &mut NcPlane,
+                    x: i32,
+                    y: i32,
+                    dim_x: u32,
+                    dim_y: u32
+                   ) -> Result<Self> {
+        Ok(Self {
+                plane: new_child_plane!(plane, x, y, dim_x, dim_y),
+                data: SubListPostData {
+                    heading: "",
+                    content: "",
+                    upvotes: 0,
+                    username: ""
+                }
         })
     }
-    // Draw the plane (not render) using the properties.
-    pub fn draw(&mut self) -> Result<()> {
+
+    fn draw(&mut self) -> Result<()> {
        self.plane.puttext(0, NcAlign::Left, "dafjaldfjald fjalsdf ajsdflkjasdf lajsdflka dfjlakdjf")?;
        self.plane.puttext(1, NcAlign::Left, "dkfjadlfad faldf adfa \n fafdj")?;
        Ok(())
@@ -48,24 +60,37 @@ pub struct SubListPage<'a> {
 }
 
 impl<'a> SubListPage<'a> {
-    pub fn new<'b>(tui_prefs: &TuiPrefs,
-                   plane: &'b mut NcPlane,
-                   ) -> Result<Box<SubListPage<'b>>> {
-        Ok(Box::new(SubListPage::<'b>{ 
-            plane: plane,
+    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, data: SubListPostData<'a>) -> Result<()> {
+        self.posts.push(SubListPost::new(
+                tui_prefs,
+                self.plane,
+                0,
+                0,
+                100,
+                100
+            )?);
+        Ok(())
+    }
+}
+
+impl<'a> Widget for SubListPage<'a> {
+    fn new(tui_prefs: &TuiPrefs,
+                   plane: &mut NcPlane,
+                   x: i32,
+                   y: i32,
+                   dim_x: u32,
+                   dim_y: u32
+                   ) -> Result<Self> {
+        Ok(Self { 
+            plane: new_child_plane!(plane, x, y, dim_x, dim_y),
             data: SubListPageData {
                 name: "Cyberpunk"
             },
             posts: vec![]
-        }))
+        })
     }
 
-    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, data: SubListPostData<'a>) -> Result<()> {
-        self.posts.push(SubListPost::new(
-                tui_prefs,
-                new_child_plane!(self.plane, 0, 0, 100, 100),
-                data
-            )?);
+    fn draw(&mut self) -> Result<()> {
         Ok(())
     }
 }

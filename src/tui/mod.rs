@@ -8,4 +8,4 @@ pub use tui::init_tui;
 pub use app::App;
 
 pub use util::{ TuiPrefs, val_tui_prefs_des };
-pub(super) use util::{ Color, TuiWidget};
+pub(super) use util::{ Color, Widget};
