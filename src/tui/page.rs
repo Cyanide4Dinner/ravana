@@ -5,12 +5,10 @@ pub enum PageType {
     SubredditListing
 }
 
-// Page properties.
-pub struct PageProps {
-    pub dim_x: u32,
-    pub dim_y: u32
-}
-
 pub trait Page: Send {
-    fn draw(&self) -> Result<()>;
+    // Draw widgets onto plane.
+    fn draw(&mut self) -> Result<()>;
+
+    // Fetch data.
+    fn fetch(&mut self) -> Result<()>;
 }

@@ -1,5 +1,6 @@
 use anyhow::{ anyhow, Result };
 use log::{ error, info, warn };
+use libnotcurses_sys::{ NcPlane, NcPlaneOptions };
 
 use crate::jobs::{ TuiPrefsDes };
 
@@ -47,15 +48,16 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
 }
 
 
+#[derive(Clone)]
 #[cfg_attr(test, derive(PartialEq, Debug))]
 pub struct Color {
-    r: u8,
-    g: u8,
-    b: u8
+    pub r: u8,
+    pub g: u8,
+    pub b: u8
 }
 
 impl Color {
-    fn get_color_from_str(color_str: &str) -> Option<Color> {
+    pub fn get_color_from_str(color_str: &str) -> Option<Color> {
         let mut r: u8;
         let mut g: u8;
         let mut b: u8;
@@ -81,12 +83,12 @@ impl Color {
 }
 
 pub struct Theme {
-    highlight_fg: Color,
-    highlight_bg: Color
+    pub highlight_fg: Color,
+    pub highlight_bg: Color
 }
 
 pub struct TuiPrefs {
-    theme: Theme
+    pub theme: Theme
 }
 
 impl TuiPrefs {
@@ -104,6 +106,16 @@ impl TuiPrefs {
         )
     }
 }
+
+pub trait TuiWidget {
+}
+
+macro_rules! new_child_plane {
+    { $parent_plane: expr, $x: expr, $y: expr, $dim_x: expr, $dim_y: expr} => {
+        NcPlane::new_child($parent_plane, &NcPlaneOptions::new($x, $y, $dim_x, $dim_y))?
+    }
+}
+pub(super) use new_child_plane;
 
 #[cfg(test)]
 mod tests {

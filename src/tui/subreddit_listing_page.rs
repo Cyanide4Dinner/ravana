@@ -5,73 +5,80 @@ use libnotcurses_sys::{
     NcAlign,
 };
 
-use super::page::{ Page, PageProps };
+use super::{ Color, page::{ Page }, TuiPrefs, TuiWidget, util::new_child_plane };
 
-pub struct SubListPostProps {
-    pub dim_y: u32,
-    pub dim_x: u32
+pub struct SubListPostData<'a> {
+    pub upvotes: u32,
+    pub heading: &'a str,
+    pub content: &'a str,
+    pub username: &'a str
 }
 
 pub struct SubListPost<'a> {
     plane: &'a mut NcPlane,
-    heading: &'a str,
-    upvotes: u32,
-    username: &'a str,
-    content: &'a str,
+    data: SubListPostData<'a>
 }
 
 impl<'a> SubListPost<'a> {
-    pub fn new<'b>(sl_page_plane: &'b mut NcPlane, props: SubListPostProps) -> Result<SubListPost<'b>> {
+    pub fn new<'b>(tui_prefs: &TuiPrefs,
+                    plane: &'b mut NcPlane,
+                    data: SubListPostData<'b>
+                   ) -> Result<SubListPost<'b>> {
         Ok(SubListPost {
-            plane:  NcPlane::new_child(sl_page_plane, &NcPlaneOptions::new(0, 0, props.dim_y, props.dim_x))?,
-            heading: "",
-            upvotes: 0,
-            content: "",
-            username: "",
+                plane: plane,
+                data: data
         })
     }
     // Draw the plane (not render) using the properties.
-    pub fn draw(&mut self) {
-       self.plane.set_bg_rgb8(226u8, 36u8, 36u8); 
-       self.plane.puttext(0, NcAlign::Left, "dafjaldfjald fjalsdf ajsdflkjasdf lajsdflka dfjlakdjf");
-       self.plane.puttext(1, NcAlign::Left, "dkfjadlfad faldf adfa \n fafdj");
+    pub fn draw(&mut self) -> Result<()> {
+       self.plane.puttext(0, NcAlign::Left, "dafjaldfjald fjalsdf ajsdflkjasdf lajsdflka dfjlakdjf")?;
+       self.plane.puttext(1, NcAlign::Left, "dkfjadlfad faldf adfa \n fafdj")?;
+       Ok(())
     }
 }
 
-pub struct SubListData<'a> {
-    posts: Vec<SubListPost<'a>>
-}
-
-pub struct SubListPageProps {
-    pub dim_x: u32,
-    pub dim_y: u32
+pub struct SubListPageData<'a> {
+    name: &'a str
 }
 
 pub struct SubListPage<'a> {
-    base_plane: &'a mut NcPlane,
-    subreddit_name: &'a str,
-    data: SubListData<'a>
-}
-
-impl Page for SubListPage<'_> {
-    fn draw(&self) -> Result<()> {
-        Ok(()) 
-    }
+    plane: &'a mut NcPlane,
+    data: SubListPageData<'a>,
+    posts: Vec<SubListPost<'a>>
 }
 
 impl<'a> SubListPage<'a> {
-    pub fn new<'b>(app_page: &mut NcPlane, page_props: PageProps) -> Result<Box<SubListPage<'b>>> {
-        let base_plane = NcPlane::new_child(app_page, &NcPlaneOptions::new(0, 0, page_props.dim_y, page_props.dim_x))?;
+    pub fn new<'b>(tui_prefs: &TuiPrefs,
+                   plane: &'b mut NcPlane,
+                   ) -> Result<Box<SubListPage<'b>>> {
+        Ok(Box::new(SubListPage::<'b>{ 
+            plane: plane,
+            data: SubListPageData {
+                name: "Cyberpunk"
+            },
+            posts: vec![]
+        }))
+    }
 
-        let mut dummy_listing_post = SubListPost {
-            heading: "Try Heading",
-            content: "Try Content",
-            upvotes: 0,
-            username: "hi",
-            plane: NcPlane::new_child(base_plane, &NcPlaneOptions::new(0, 0, page_props.dim_y/4, page_props.dim_x))? };
-        dummy_listing_post.draw();
-        let dummmy_listing_data = SubListData { posts: vec!{dummy_listing_post} };
+    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, data: SubListPostData<'a>) -> Result<()> {
+        self.posts.push(SubListPost::new(
+                tui_prefs,
+                new_child_plane!(self.plane, 0, 0, 100, 100),
+                data
+            )?);
+        Ok(())
+    }
+}
 
-        Ok(Box::new(SubListPage { base_plane: base_plane, subreddit_name: "Cyberpunk", data: dummmy_listing_data }))
+impl Page for SubListPage<'_> {
+    fn draw(&mut self) -> Result<()> {
+        for post in self.posts.iter_mut() {
+            post.draw().context("Failed to render post.")?;
+        }
+        Ok(())
+    }
+
+    fn fetch(&mut self) -> Result<()> {
+        Ok(())
     }
 }
