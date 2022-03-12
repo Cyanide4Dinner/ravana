@@ -52,7 +52,9 @@ impl<'a> App<'a> {
                     heading: "hadfafda",
                     content: "fahfaljdf",
                     upvotes: 78,
-                    username: "afhaldjf"
+                    username: "afhaldjf",
+                    subreddit_name: "rust",
+                    comments: 78
                 })?;
                 self.pages.push(Box::new(sub_list_page));
             },
@@ -63,7 +65,7 @@ impl<'a> App<'a> {
 
     pub fn render(&mut self) -> Result<()> {
         for page in self.pages.iter_mut() {
-            page.draw()?;
+            page.draw(&self.tui_prefs)?;
         }
 
         if let Ok(mut nc_lock) = self.nc.lock() {

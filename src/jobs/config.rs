@@ -54,8 +54,12 @@ mod tests {
             app_quit = "abcdefghi"
 
             [tui]
-            theme.highlight-fg= "#222222"
-            theme.highlight-bg= "#333333"
+            theme.highlight-fg = "#222222"
+            theme.highlight-bg = "#333333"
+            theme.post-header-fg = "#444444",
+            theme.post-header-bg = "#555555",
+            theme.post-upvoted_fg = "#666666",
+            theme.post-upvoted-bg = "#777777"
         "##).unwrap();
         // let mut exp_config = Config::default();
         // exp_config.key_bindings.app_quit = "ABCDEFGHIJ".to_owned();
@@ -66,7 +70,11 @@ mod tests {
             tui: TuiPrefsDes {
                 theme: ThemeDes {
                     highlight_fg: "#222222".to_string(),
-                    highlight_bg: "#333333".to_string()
+                    highlight_bg: "#333333".to_string(),
+                    post_header_fg: "#444444".to_string(),
+                    post_header_bg: "#555555".to_string(),
+                    post_upvoted_fg: "#666666".to_string(),
+                    post_upvoted_bg: "#777777".to_string()
                 }
             }
         });

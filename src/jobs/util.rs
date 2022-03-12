@@ -9,7 +9,11 @@ pub mod config {
     #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
     pub struct ThemeDes {
         pub highlight_fg: String,
-        pub highlight_bg: String
+        pub highlight_bg: String,
+        pub post_header_fg: String,
+        pub post_header_bg: String,
+        pub post_upvoted_fg: String,
+        pub post_upvoted_bg: String
     }
 
     // TUI Prefs deserialized.
@@ -39,7 +43,11 @@ pub mod config {
                 tui: TuiPrefsDes {
                     theme: ThemeDes {
                         highlight_fg: "#111111".to_string(),
-                        highlight_bg: "#111111".to_string()
+                        highlight_bg: "#111111".to_string(),
+                        post_header_fg: "#111111".to_string(), 
+                        post_header_bg: "#111111".to_string(),
+                        post_upvoted_fg: "#111111".to_string(),
+                        post_upvoted_bg: "#111111".to_string()
                     }
                 }
             }

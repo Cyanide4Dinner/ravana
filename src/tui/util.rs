@@ -42,6 +42,30 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
             error!("Wrong color format for {} {} - {}", "theme", "highlight_bg", theme.highlight_bg);
         }
         res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.post_header_fg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post_header_fg", theme.highlight_bg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.post_header_bg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post_header_bg", theme.highlight_bg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.post_upvoted_fg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post_upvoted_fg", theme.highlight_bg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.post_upvoted_bg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post_upvoted_bg", theme.highlight_bg);
+        }
+        res = res && temp_bool;
     }
 
     res
@@ -84,7 +108,11 @@ impl Color {
 
 pub struct Theme {
     pub highlight_fg: Color,
-    pub highlight_bg: Color
+    pub highlight_bg: Color,
+    pub post_header_fg: Color,
+    pub post_header_bg: Color,
+    pub post_upvoted_fg: Color,
+    pub post_upvoted_bg: Color
 }
 
 pub struct TuiPrefs {
@@ -100,7 +128,15 @@ impl TuiPrefs {
                     highlight_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.highlight_fg) 
                         { color } else { return Err(anyhow!("Invalid color format.")); },
                     highlight_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.highlight_bg) 
-                        { color } else { return Err(anyhow!("Invalid color format.")); }
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    post_header_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_header_fg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    post_header_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_header_bg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    post_upvoted_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_upvoted_fg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    post_upvoted_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_upvoted_bg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
                 }
             }
         )
@@ -115,7 +151,7 @@ pub trait Widget: Sized {
             dim_x: u32,
             dim_y: u32
             ) -> Result<Self>;
-    fn draw(&mut self) -> Result<()>;
+    fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()>;
 }
 
 macro_rules! new_child_plane {
