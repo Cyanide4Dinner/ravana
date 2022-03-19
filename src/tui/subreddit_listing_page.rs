@@ -56,7 +56,7 @@ impl<'a> SubListPost<'a> {
         const MAX_USERNAME_LEN: u32 = 16;
         const COMMENT_COUNT_DECIMAL_PRECISION: u32 = 8;
 
-        // Fill space as character to get color on while line.
+        // Fill space as character to get color on whole line.
         // TODO: Find efficient methods, use notcurses built in tools.
         self.plane.putstr_yx_stained(0, 0, &(0..self.plane.dim_x()).map(|_| " ").collect::<String>())?;
 
@@ -111,6 +111,11 @@ impl<'a> SubListPost<'a> {
                 tui_prefs.theme.post_heading_fg.b,
             );
         let heading_combined_channel = NcChannels::combine(heading_fg_channel, heading_bg_channel);
+
+        // Fill space as character to get color on whole line.
+        // TODO: Find efficient methods, use notcurses built in tools.
+        self.plane.putstr_yx_stained(1, 0, &(0..self.plane.dim_x()).map(|_| " ").collect::<String>())?;
+
         self.plane.putnstr_yx(Some(1), Some(0), self.plane.dim_x() as usize, self.data.heading)?;
         self.plane.stain(
             Some(1),
