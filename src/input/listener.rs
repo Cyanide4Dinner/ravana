@@ -7,16 +7,21 @@ use libnotcurses_sys::{
     NcTime
 }; 
 use log::{ info, warn };
-use std::{ sync::{ Arc, Mutex } };
+use std::{ collections::HashMap, sync::{ Arc, Mutex } };
 use tokio::sync::mpsc::Sender;
 
 use crate::events::app_events::init_tui;
-use crate::jobs::{ Config, config::create_key_bindings_trie, Key, KeyBindingsTrie, KeyCombination  };
 use crate::state::Message;
+use super::util::key_bindings::{ 
+    create_key_bindings_trie,
+    Key,
+    KeyBindingsTrie,
+    KeyCombination,
+};
 
-pub async fn init(nc: Arc<Mutex<&mut Nc>>, config: Arc<Config>, mpsc_send: Sender<Message>) -> Result<()> {
+pub async fn init(nc: Arc<Mutex<&mut Nc>>, kb: HashMap<String, String>, mpsc_send: Sender<Message>) -> Result<()> {
     info!("Init input listener.");
-    let kbt = create_key_bindings_trie(&config.key_bindings).await.context("Error parsing key-bindings.")?;
+    let kbt = create_key_bindings_trie(&kb).context("Error parsing key-bindings.")?;
     init_tui(mpsc_send.clone()).await?; 
     listen(nc, kbt).await?;
     Ok(())
