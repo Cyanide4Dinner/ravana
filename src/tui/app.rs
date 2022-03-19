@@ -77,3 +77,21 @@ impl<'a> App<'a> {
         Err(anyhow!("Failed to render app: unable to lock Nc."))
     }
 }
+
+impl<'a> Drop for App<'a> {
+    fn drop(&mut self) {
+        if let Err(err) = self.plane.destroy() {
+            error!("Error dropping App plane: {}", err);
+        }
+        for page in self.pages.iter_mut() {
+            drop(page);
+        }
+        if let Ok(mut nc_lock) = self.nc.lock() {
+            unsafe { 
+                if let Err(err) = nc_lock.stop() {
+                    error!("Error destroying Nc instance while dropping App: {}", err);
+                } 
+            }
+        } else { error!("Error locking Nc instance while dropping App."); }
+    }
+}

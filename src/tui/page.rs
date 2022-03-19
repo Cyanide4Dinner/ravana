@@ -7,7 +7,8 @@ pub enum PageType {
     SubredditListing
 }
 
-pub trait Page: Send {
+// Drop trati needed because libnotcurses_sys doesn't call destructor methods
+pub trait Page: Send + Drop {
     // Draw widgets onto plane.
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()>;
 

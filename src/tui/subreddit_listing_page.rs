@@ -10,6 +10,7 @@ use libnotcurses_sys::{
     NcPlaneOptions,
     NcStyle,
 };
+use log::{ error, info, warn };
 
 use super::{ Color, page::{ Page }, TuiPrefs, Widget, util::new_child_plane };
 
@@ -98,7 +99,14 @@ impl<'a> SubListPost<'a> {
     }
 }
 
-// TODO: 
+impl<'a> Drop for SubListPost<'a> {
+    fn drop(&mut self) {
+        if let Err(err) = self.plane.destroy() {
+            error!("Error dropping SubListPost plane: {}", err);
+        }
+    } 
+}
+
 impl<'a> Widget for SubListPost<'a> {
     fn new(tui_prefs: &TuiPrefs,
                     parent_plane: &mut NcPlane,
@@ -148,6 +156,17 @@ impl<'a> SubListPage<'a> {
                 self.plane.dim_y()
             )?);
         Ok(())
+    }
+}
+
+impl<'a> Drop for SubListPage<'a> {
+    fn drop(&mut self) {
+        for post in self.posts.iter_mut() {
+            drop(post)
+        }
+        if let Err(err) = self.plane.destroy() {
+            error!("Error dropping SubListPage plane: {}", err);
+        }
     }
 }
 
