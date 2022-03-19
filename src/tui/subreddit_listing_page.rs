@@ -9,6 +9,7 @@ use libnotcurses_sys::{
     NcPlane,
     NcPlaneOptions,
     NcStyle,
+    c_api
 };
 use log::{ error, info, warn };
 
@@ -97,6 +98,35 @@ impl<'a> SubListPost<'a> {
         }
         Ok(())
     }
+
+    fn draw_heading(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
+        let header_bg_channel = NcChannel::from_rgb8(
+                tui_prefs.theme.post_header_bg.r,
+                tui_prefs.theme.post_header_bg.b,
+                tui_prefs.theme.post_header_bg.g,
+            );
+        let header_fg_channel = NcChannel::from_rgb8(
+                tui_prefs.theme.post_header_fg.r,
+                tui_prefs.theme.post_header_fg.b,
+                tui_prefs.theme.post_header_fg.g,
+            );
+        let header_combined_channel = NcChannels::combine(header_fg_channel, header_bg_channel);
+        self.plane.putnstr_yx(Some(1), Some(0), self.plane.dim_x() as usize, self.data.heading)?;
+        self.plane.stain(
+            Some(1),
+            Some(0),
+            Some(1),
+            None,
+            header_combined_channel,
+            header_combined_channel,
+            header_combined_channel,
+            header_combined_channel,
+        )?;
+
+        // Make heading bold formatted.
+        self.plane.format(Some(1), Some(0), Some(1), None, c_api::NCSTYLE_BOLD)?;
+        Ok(())
+    }
 }
 
 impl<'a> Drop for SubListPost<'a> {
@@ -120,7 +150,7 @@ impl<'a> Widget for SubListPost<'a> {
         Ok(Self {
                 plane: plane,
                 data: SubListPostData {
-                    heading: "",
+                    heading: "Heading 1",
                     content: "",
                     upvotes: 18901,
                     username: "AyeDeeKay",
@@ -131,7 +161,8 @@ impl<'a> Widget for SubListPost<'a> {
     }
 
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
-        self.draw_header(tui_prefs)
+        self.draw_header(tui_prefs)?;
+        self.draw_heading(tui_prefs)
     }
 }
 
