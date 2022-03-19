@@ -8,7 +8,7 @@ use libnotcurses_sys::{
     NcCell,
     NcPlane,
     NcPlaneOptions,
-    NcStyle
+    NcStyle,
 };
 
 use super::{ Color, page::{ Page }, TuiPrefs, Widget, util::new_child_plane };
@@ -28,34 +28,7 @@ pub struct SubListPost<'a> {
 }
 
 impl<'a> SubListPost<'a> {
-}
-
-impl<'a> Widget for SubListPost<'a> {
-    fn new(tui_prefs: &TuiPrefs,
-                    parent_plane: &mut NcPlane,
-                    x: i32,
-                    y: i32,
-                    dim_x: u32,
-                    dim_y: u32
-                   ) -> Result<Self> {
-        let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
-
-        plane.set_base_cell(&NcCell::from_char7b(' ')?)?;
-
-        Ok(Self {
-                plane: plane,
-                data: SubListPostData {
-                    heading: "",
-                    content: "",
-                    upvotes: 18901,
-                    username: "AyeDeeKay",
-                    subreddit_name: "Rust",
-                    comments: 17
-                }
-        })
-    }
-
-    fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
+    fn draw_header(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
         let header_bg_channel = NcChannel::from_rgb8(
                 tui_prefs.theme.post_header_bg.r,
                 tui_prefs.theme.post_header_bg.b,
@@ -77,26 +50,13 @@ impl<'a> Widget for SubListPost<'a> {
 
         let header_combined_channel = NcChannels::combine(header_fg_channel, header_bg_channel);
 
-        // self.plane.gradient2x1(
-        //     Some(0),
-        //     Some(0),
-        //     Some(1),
-        //     None,
-        //     // NcChannel::from_rgb8(100, 100, 100),
-        //     // NcChannel::from_rgb8(100, 100, 100),
-        //     // NcChannel::from_rgb8(100, 100, 100),
-        //     // NcChannel::from_rgb8(100, 100, 100),
-        //     header_bg_channel,
-        //     header_bg_channel,
-        //     header_bg_channel,
-        //     header_bg_channel,
-        // )?;
-
-
-        
         const UPVOTE_COUNT_DECIMAL_PRECISION: u32 = 7;
         const MAX_USERNAME_LEN: u32 = 16;
         const COMMENT_COUNT_DECIMAL_PRECISION: u32 = 8;
+
+        // Fill space as character to get color on while line.
+        // TODO: Find efficient methods, use notcurses built in tools.
+        self.plane.putstr_yx_stained(0, 0, &(0..self.plane.dim_x()).map(|_| " ").collect::<String>())?;
 
         let mut pos = 0;
         self.plane.putstr_yx(Some(0), Some(pos), &self.data.upvotes.to_string())?;
@@ -135,6 +95,35 @@ impl<'a> Widget for SubListPost<'a> {
             )?;
         }
         Ok(())
+    }
+}
+
+// TODO: 
+impl<'a> Widget for SubListPost<'a> {
+    fn new(tui_prefs: &TuiPrefs,
+                    parent_plane: &mut NcPlane,
+                    x: i32,
+                    y: i32,
+                    dim_x: u32,
+                    dim_y: u32
+                   ) -> Result<Self> {
+        let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
+
+        Ok(Self {
+                plane: plane,
+                data: SubListPostData {
+                    heading: "",
+                    content: "",
+                    upvotes: 18901,
+                    username: "AyeDeeKay",
+                    subreddit_name: "Rust",
+                    comments: 17
+                }
+        })
+    }
+
+    fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
+        self.draw_header(tui_prefs)
     }
 }
 
