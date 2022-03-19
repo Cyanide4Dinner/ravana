@@ -60,6 +60,8 @@ mod tests {
             theme.post-header-bg = "#555555",
             theme.post-upvoted_fg = "#666666",
             theme.post-upvoted-bg = "#777777"
+            theme.post-heading-fg = "#888888",
+            theme.post-heading-bg = "#999999"
         "##).unwrap();
         // let mut exp_config = Config::default();
         // exp_config.key_bindings.app_quit = "ABCDEFGHIJ".to_owned();
@@ -74,7 +76,9 @@ mod tests {
                     post_header_fg: "#444444".to_string(),
                     post_header_bg: "#555555".to_string(),
                     post_upvoted_fg: "#666666".to_string(),
-                    post_upvoted_bg: "#777777".to_string()
+                    post_upvoted_bg: "#777777".to_string(),
+                    post_heading_fg: "#888888".to_string(),
+                    post_heading_bg: "#999999".to_string()
                 }
             }
         });

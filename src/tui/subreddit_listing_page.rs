@@ -100,27 +100,27 @@ impl<'a> SubListPost<'a> {
     }
 
     fn draw_heading(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
-        let header_bg_channel = NcChannel::from_rgb8(
-                tui_prefs.theme.post_header_bg.r,
-                tui_prefs.theme.post_header_bg.b,
-                tui_prefs.theme.post_header_bg.g,
+        let heading_bg_channel = NcChannel::from_rgb8(
+                tui_prefs.theme.post_heading_bg.r,
+                tui_prefs.theme.post_heading_bg.g,
+                tui_prefs.theme.post_heading_bg.b,
             );
-        let header_fg_channel = NcChannel::from_rgb8(
-                tui_prefs.theme.post_header_fg.r,
-                tui_prefs.theme.post_header_fg.b,
-                tui_prefs.theme.post_header_fg.g,
+        let heading_fg_channel = NcChannel::from_rgb8(
+                tui_prefs.theme.post_heading_fg.r,
+                tui_prefs.theme.post_heading_fg.g,
+                tui_prefs.theme.post_heading_fg.b,
             );
-        let header_combined_channel = NcChannels::combine(header_fg_channel, header_bg_channel);
+        let heading_combined_channel = NcChannels::combine(heading_fg_channel, heading_bg_channel);
         self.plane.putnstr_yx(Some(1), Some(0), self.plane.dim_x() as usize, self.data.heading)?;
         self.plane.stain(
             Some(1),
             Some(0),
             Some(1),
             None,
-            header_combined_channel,
-            header_combined_channel,
-            header_combined_channel,
-            header_combined_channel,
+            heading_combined_channel,
+            heading_combined_channel,
+            heading_combined_channel,
+            heading_combined_channel,
         )?;
 
         // Make heading bold formatted.

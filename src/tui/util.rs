@@ -33,37 +33,49 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
 
         temp_bool = val_color_fmt(&theme.highlight_fg);
         if !temp_bool {
-            error!("Wrong color format for {} {} - {}", "theme", "highlight_fg", theme.highlight_fg);
+            error!("Wrong color format for {} {} - {}", "theme", "highlight-fg", theme.highlight_fg);
         }
         res = res && temp_bool;
 
         temp_bool = val_color_fmt(&theme.highlight_bg);
         if !temp_bool {
-            error!("Wrong color format for {} {} - {}", "theme", "highlight_bg", theme.highlight_bg);
+            error!("Wrong color format for {} {} - {}", "theme", "highlight-bg", theme.highlight_bg);
         }
         res = res && temp_bool;
 
         temp_bool = val_color_fmt(&theme.post_header_fg);
         if !temp_bool {
-            error!("Wrong color format for {} {} - {}", "theme", "post_header_fg", theme.highlight_bg);
+            error!("Wrong color format for {} {} - {}", "theme", "post-header-fg", theme.post_header_fg);
         }
         res = res && temp_bool;
 
         temp_bool = val_color_fmt(&theme.post_header_bg);
         if !temp_bool {
-            error!("Wrong color format for {} {} - {}", "theme", "post_header_bg", theme.highlight_bg);
+            error!("Wrong color format for {} {} - {}", "theme", "post-header-bg", theme.post_header_bg);
         }
         res = res && temp_bool;
 
         temp_bool = val_color_fmt(&theme.post_upvoted_fg);
         if !temp_bool {
-            error!("Wrong color format for {} {} - {}", "theme", "post_upvoted_fg", theme.highlight_bg);
+            error!("Wrong color format for {} {} - {}", "theme", "post-upvoted-fg", theme.post_upvoted_fg);
         }
         res = res && temp_bool;
 
         temp_bool = val_color_fmt(&theme.post_upvoted_bg);
         if !temp_bool {
-            error!("Wrong color format for {} {} - {}", "theme", "post_upvoted_bg", theme.highlight_bg);
+            error!("Wrong color format for {} {} - {}", "theme", "post-upvoted-bg", theme.post_upvoted_bg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.post_heading_fg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post-heading-fg", theme.post_heading_fg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.post_heading_bg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post-heading-bg", theme.post_heading_bg);
         }
         res = res && temp_bool;
     }
@@ -112,7 +124,9 @@ pub struct Theme {
     pub post_header_fg: Color,
     pub post_header_bg: Color,
     pub post_upvoted_fg: Color,
-    pub post_upvoted_bg: Color
+    pub post_upvoted_bg: Color,
+    pub post_heading_fg: Color,
+    pub post_heading_bg: Color
 }
 
 pub struct TuiPrefs {
@@ -137,6 +151,10 @@ impl TuiPrefs {
                         { color } else { return Err(anyhow!("Invalid color format.")); },
                     post_upvoted_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_upvoted_bg) 
                         { color } else { return Err(anyhow!("Invalid color format.")); },
+                    post_heading_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_heading_fg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    post_heading_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_heading_bg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); }
                 }
             }
         )

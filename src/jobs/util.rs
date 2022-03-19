@@ -13,7 +13,9 @@ pub mod config {
         pub post_header_fg: String,
         pub post_header_bg: String,
         pub post_upvoted_fg: String,
-        pub post_upvoted_bg: String
+        pub post_upvoted_bg: String,
+        pub post_heading_fg: String,
+        pub post_heading_bg: String
     }
 
     // TUI Prefs deserialized.
@@ -47,7 +49,9 @@ pub mod config {
                         post_header_fg: "#111111".to_string(), 
                         post_header_bg: "#111111".to_string(),
                         post_upvoted_fg: "#111111".to_string(),
-                        post_upvoted_bg: "#111111".to_string()
+                        post_upvoted_bg: "#111111".to_string(),
+                        post_heading_fg: "#111111".to_string(),
+                        post_heading_bg: "#111111".to_string()
                     }
                 }
             }
