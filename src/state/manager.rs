@@ -31,8 +31,12 @@ pub async fn manage(
         if let Some(ms) = mpsc_recv.recv().await {
             match ms {
                 InitTUI => {
-                    info!("TUI init message recieved.");
+                    info!("Message recieved: TUI init");
                     app = init_tui(nc.clone(), &tui_prefs_des)?;
+                },
+                AppQuit => {
+                    info!("Message recieved: App quit");
+                    return Ok(());
                 }
             } 
         }

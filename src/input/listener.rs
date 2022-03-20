@@ -23,13 +23,13 @@ pub async fn init(nc: Arc<Mutex<&mut Nc>>, kb: HashMap<String, String>, mpsc_sen
     info!("Init input listener.");
     let kbt = create_key_bindings_trie(&kb).context("Error parsing key-bindings.")?;
     init_tui(mpsc_send.clone()).await?; 
-    listen(nc, kbt).await?;
+    listen(nc, kbt, mpsc_send.clone()).await?;
     Ok(())
 }
 
 //TODO: Create tests for event loop checking and ensuring.
 //TODO: Use file descriptor IO multiplexing for waiting for input. (see notcurses_inputready_fd)
-async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> Result<()> {
+async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender<Message>) -> Result<()> {
     info!("Begin input listening loop.");
     let mut buffer: KeyCombination = KeyCombination::new();
     loop {
@@ -43,8 +43,13 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> Result<()> {
                 buffer.clear();
             }
             else {
+                // TODO: Find efficient way of detecting AppQuit, currently for this one detection
+                // all trait objects of UserEvent are made to have get_name()
                 if let Some(ue) = kbt.get(&buffer) {
-                    ue.trigger().await?;
+                    ue.trigger(mpsc_send.clone()).await?;
+                    if ue.get_name().eq("AppQuit") {
+                        return Ok(());
+                    }
                     buffer.clear();
                 }
             }

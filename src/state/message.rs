@@ -1,3 +1,4 @@
 pub enum Message {
-    InitTUI 
+    InitTUI,
+    AppQuit
 }
