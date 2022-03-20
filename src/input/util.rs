@@ -2,9 +2,9 @@ pub mod key_bindings {
     use anyhow::{ anyhow, Result };
     #[cfg(test)]
     use enum_iterator::IntoEnumIterator;
-    use log::{ error, info, warn };
+    use log::info;
     use phf::{ phf_map, Map };
-    use sequence_trie::{ SequenceTrie, TrieKey };
+    use sequence_trie::SequenceTrie;
     use std::collections::HashMap;
 
     use crate::events::{get_user_event, UserEvent};
@@ -134,6 +134,7 @@ pub mod key_bindings {
     };
 
 
+    #[cfg(test)]
     #[allow(unreachable_patterns)]
     pub(super) fn key_to_code(key: &Key) -> Result<u8> {
         match key {
@@ -355,14 +356,4 @@ mod tests {
         };
         assert_eq!(key_comb7, parse_to_key_combination("g<Esc>").unwrap());
     }
-    // #[test]
-    // fn test_code_key_enum_conversions() {
-    //     let itr = Key::into_iter();
-    //     for _ in [0..Key::VARIANT_COUNT] {
-    //         if let Some(key) = itr.next() {
-    //             assert_eq!(code_to_key(key_to_code(key).unwrap()).unwrap(), key);
-    //         }
-    //         else { panic!("No key returned by iterator") }
-    //     }
-    // }
 }

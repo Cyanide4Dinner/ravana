@@ -3,7 +3,6 @@ use anyhow::Result;
 use super::TuiPrefs;
 
 pub enum PageType {
-    Post,
     SubredditListing
 }
 

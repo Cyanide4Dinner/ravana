@@ -44,7 +44,7 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie) -> Result<()> {
             }
             else {
                 if let Some(ue) = kbt.get(&buffer) {
-                    ue.trigger().await;
+                    ue.trigger().await?;
                     buffer.clear();
                 }
             }

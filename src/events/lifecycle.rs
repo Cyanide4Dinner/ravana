@@ -1,11 +1,11 @@
 use anyhow::{ anyhow, Result };
 use libnotcurses_sys::*;
-use log::{ error, info, warn };
+use log::{ error, info };
 use std::sync::{ Mutex, Arc };
 use tokio::sync::mpsc;
 
 use crate::input::listener::init as listener_init;
-use crate::jobs::{ config::load_config };
+use crate::jobs::config::load_config;
 use crate::state::{ manager::init as manager_init, Message };
 use crate::tui::val_tui_prefs_des;
 

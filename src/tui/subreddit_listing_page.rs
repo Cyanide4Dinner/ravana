@@ -1,19 +1,16 @@
-use anyhow::{ anyhow, Context, Result };
+use anyhow::{ Context, Result };
 use libnotcurses_sys::{
-    NcAlign,
     NcChannel,
     NcChannelApi,
     NcChannels,
     NcChannelsApi,
-    NcCell,
     NcPlane,
     NcPlaneOptions,
-    NcStyle,
     c_api
 };
-use log::{ error, info, warn };
+use log::error;
 
-use super::{ Color, page::{ Page }, TuiPrefs, Widget, util::new_child_plane };
+use super::{  page::Page, TuiPrefs, Widget, util::new_child_plane };
 
 pub struct SubListPostData<'a> {
     pub upvotes: u32,
@@ -143,7 +140,7 @@ impl<'a> Drop for SubListPost<'a> {
 }
 
 impl<'a> Widget for SubListPost<'a> {
-    fn new(tui_prefs: &TuiPrefs,
+    fn new(_tui_prefs: &TuiPrefs,
                     parent_plane: &mut NcPlane,
                     x: i32,
                     y: i32,
@@ -153,7 +150,7 @@ impl<'a> Widget for SubListPost<'a> {
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
         Ok(Self {
-                plane: plane,
+                plane,
                 data: SubListPostData {
                     heading: "Heading 1",
                     content: "",
@@ -171,18 +168,13 @@ impl<'a> Widget for SubListPost<'a> {
     }
 }
 
-pub struct SubListPageData<'a> {
-    name: &'a str
-}
-
 pub struct SubListPage<'a> {
     plane: &'a mut NcPlane,
-    data: SubListPageData<'a>,
     posts: Vec<SubListPost<'a>>
 }
 
 impl<'a> SubListPage<'a> {
-    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, data: SubListPostData<'a>) -> Result<()> {
+    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, _data: SubListPostData<'a>) -> Result<()> {
         self.posts.push(SubListPost::new(
                 tui_prefs,
                 self.plane,
@@ -228,15 +220,12 @@ impl<'a> Widget for SubListPage<'a> {
         );
         
         Ok(Self { 
-            plane: plane,
-            data: SubListPageData {
-                name: "Cyberpunk"
-            },
+            plane,
             posts: vec![]
         })
     }
 
-    fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
+    fn draw(&mut self, _tui_prefs: &TuiPrefs) -> Result<()> {
         Ok(())
     }
 }

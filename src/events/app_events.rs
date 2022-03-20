@@ -1,6 +1,5 @@
 use anyhow::{ anyhow, Result };
 use log::error;
-use std::{ thread::sleep, time::Duration };
 use tokio::sync::mpsc::Sender;
 
 use crate::state::Message;

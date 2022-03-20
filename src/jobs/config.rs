@@ -1,4 +1,4 @@
-use anyhow::{ anyhow, Result };
+use anyhow::Result;
 use log::{ error, info, warn };
 use std::{
     fs::File,
@@ -7,9 +7,7 @@ use std::{
 };
 
 use crate::def::app::CONFIG_DIR_PATHS;
-use super::util::{
-    config::{ Config, ThemeDes, TuiPrefsDes },
-};
+use super::util::config::Config;
 
 pub async fn load_config() -> Config {
     for path in CONFIG_DIR_PATHS {
@@ -45,7 +43,8 @@ fn deserialize_toml(s: &str) -> Result<Config, toml::de::Error> {
 mod tests {
     use std::collections::HashMap;
 
-    use super::{ Config, deserialize_toml, ThemeDes, TuiPrefsDes  };
+    use super::{ Config, deserialize_toml };
+    use crate::jobs::{ ThemeDes, TuiPrefsDes };
 // Test deserialize_toml deserializes toml proper.
     #[test]
     fn test_deserialize_toml() {

@@ -10,7 +10,7 @@ use std::sync::{ Arc, Mutex };
 use crate::tui::TuiPrefs;
 use super::subreddit_listing_page::SubListPage;
 use super::{ page::{ Page, PageType },
-                subreddit_listing_page::{ SubListPostData },
+                subreddit_listing_page::SubListPostData,
                 util::new_child_plane,
                 Widget };
 
@@ -30,9 +30,9 @@ impl<'a> App<'a> {
 
         Ok(
             App {
-                nc: nc,
+                nc,
                 plane: new_child_plane!(stdplane, 0, 0, dim_x, dim_y),
-                tui_prefs: tui_prefs,
+                tui_prefs,
                 pages: Vec::new()
             }
         )
@@ -57,8 +57,7 @@ impl<'a> App<'a> {
                     comments: 78
                 })?;
                 self.pages.push(Box::new(sub_list_page));
-            },
-            PageType::Post => {  }
+            }
         }
         Ok(())
     }

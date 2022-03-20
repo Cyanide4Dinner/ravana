@@ -1,8 +1,8 @@
 use anyhow::{ anyhow, Result };
-use log::{ error, info, warn };
-use libnotcurses_sys::{ NcPlane, NcPlaneOptions };
+use log::{ error, info };
+use libnotcurses_sys::NcPlane;
 
-use crate::jobs::{ TuiPrefsDes };
+use crate::jobs::TuiPrefsDes;
 
 // TODO: Add test to check if we're validating all fields and formats.
 pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
@@ -111,9 +111,9 @@ impl Color {
         b = b*16 + chars.next()?.to_digit(16)?.to_le_bytes()[0];
 
         Some(Color {
-            r: r,
-            g: g,
-            b: b
+            r,
+            b,
+            g
         })
     }    
 }
