@@ -1,5 +1,6 @@
 use anyhow::{ anyhow, Context, Result };
 use libnotcurses_sys::{
+    c_api,
     Nc,
     NcPlane,
     NcPlaneOptions
@@ -26,6 +27,9 @@ impl<'a> App<'a> {
         let mut nc_lock = nc.lock().unwrap();
         let stdplane = unsafe { nc_lock.stdplane() }; 
         let (dim_x, dim_y) = nc_lock.term_dim_yx();
+
+        if tui_prefs.interface.mouse_events_enable { nc_lock.mice_enable(c_api::NCMICE_ALL_EVENTS)?; }
+
         drop(nc_lock);
 
         Ok(

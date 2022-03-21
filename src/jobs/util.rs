@@ -18,10 +18,18 @@ pub mod config {
         pub post_heading_bg: String
     }
 
+    // Theme deserialized.
+    #[derive(Deserialize, Debug, PartialEq, Eq)]
+    #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
+    pub struct InterfaceDes {
+        pub mouse_events_enable: bool
+    }
+
     // TUI Prefs deserialized.
     #[derive(Deserialize, Debug, PartialEq, Eq)]
     #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
     pub struct TuiPrefsDes {
+        pub interface: InterfaceDes,
         pub theme: ThemeDes
     }
 
@@ -43,6 +51,9 @@ pub mod config {
             Config {
                 key_bindings: default_key_bindings,
                 tui: TuiPrefsDes {
+                    interface: InterfaceDes {
+                        mouse_events_enable: true
+                    },
                     theme: ThemeDes {
                         highlight_fg: "#111111".to_string(),
                         highlight_bg: "#111111".to_string(),

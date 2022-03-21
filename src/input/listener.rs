@@ -128,7 +128,10 @@ fn gen_key(ncr: &NcReceived, id: &NcInput) -> Option<KeyCombination> {
                 &NcKey::END => { key_comb_vec.push(Key::KeyEnd); },
                 &NcKey::PGUP => { key_comb_vec.push(Key::KeyPageUp); },
                 &NcKey::PGDOWN => { key_comb_vec.push(Key::KeyPageDown); },
-                _ => { warn!("Found no key matching for event."); return None; }
+                _ => { 
+                    info!("User input: {:?} {:?}", ncr, id);
+                    warn!("Found no key matching for event."); return None;
+                }
             }
             return Some(key_comb_vec);
         },

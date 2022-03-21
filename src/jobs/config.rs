@@ -44,7 +44,7 @@ mod tests {
     use std::collections::HashMap;
 
     use super::{ Config, deserialize_toml };
-    use crate::jobs::{ ThemeDes, TuiPrefsDes };
+    use crate::jobs::{ InterfaceDes, ThemeDes, TuiPrefsDes };
 // Test deserialize_toml deserializes toml proper.
     #[test]
     fn test_deserialize_toml() {
@@ -53,13 +53,15 @@ mod tests {
             app_quit = "abcdefghi"
 
             [tui]
+            interface.mouse-events-enable = false
+
             theme.highlight-fg = "#222222"
             theme.highlight-bg = "#333333"
-            theme.post-header-fg = "#444444",
-            theme.post-header-bg = "#555555",
-            theme.post-upvoted_fg = "#666666",
+            theme.post-header-fg = "#444444"
+            theme.post-header-bg = "#555555"
+            theme.post-upvoted-fg = "#666666"
             theme.post-upvoted-bg = "#777777"
-            theme.post-heading-fg = "#888888",
+            theme.post-heading-fg = "#888888"
             theme.post-heading-bg = "#999999"
         "##).unwrap();
         // let mut exp_config = Config::default();
@@ -69,6 +71,9 @@ mod tests {
                 ("app_quit".to_owned(), "abcdefghi".to_owned())
             ]),
             tui: TuiPrefsDes {
+                interface: InterfaceDes {
+                    mouse_events_enable: false
+                },
                 theme: ThemeDes {
                     highlight_fg: "#222222".to_string(),
                     highlight_bg: "#333333".to_string(),

@@ -118,6 +118,10 @@ impl Color {
     }    
 }
 
+pub struct InterfacePrefs {
+    pub mouse_events_enable: bool
+}
+
 pub struct Theme {
     pub highlight_fg: Color,
     pub highlight_bg: Color,
@@ -130,6 +134,7 @@ pub struct Theme {
 }
 
 pub struct TuiPrefs {
+    pub interface: InterfacePrefs,
     pub theme: Theme
 }
 
@@ -138,6 +143,9 @@ impl TuiPrefs {
         info!("Generating TUI Prefs.");
         Ok(
             TuiPrefs {
+                interface: InterfacePrefs {
+                    mouse_events_enable: tui_prefs_des.interface.mouse_events_enable
+                },
                 theme: Theme {
                     highlight_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.highlight_fg) 
                         { color } else { return Err(anyhow!("Invalid color format.")); },
