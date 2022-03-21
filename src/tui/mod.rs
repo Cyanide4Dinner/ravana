@@ -1,26 +1,11 @@
-use libnotcurses_sys::{
-    Nc,
-    NcDim,
-    NcResult
-};
+mod tui;
+mod app;
+mod util;
+pub(super) mod page;
+pub(super) mod subreddit_listing_page;
 
-//DEV
-pub fn test_tui(){
-    let nc = unsafe{ Nc::new().unwrap() };    
-    init(nc).unwrap();
-    render(nc).unwrap();
-    stop(nc);
-}
+pub use tui::init_tui;
+pub use app::App;
 
-fn init(nc: &mut Nc) -> NcResult<NcDim>{
-   let plane = unsafe{ nc.stdplane() }; 
-   plane.putstr("hello world")
-}
-
-fn render(nc: &mut Nc) -> NcResult<()>{
-   nc.render() 
-}
-
-fn stop(nc: &mut Nc) {
-   unsafe{ nc.stop().unwrap() };
-}
+pub use util::{ TuiPrefs, val_tui_prefs_des };
+pub(super) use util::Widget;

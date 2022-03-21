@@ -7,8 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libnotcurses-sys = { git = "https://github.com/dankamongmen/libnotcurses-sys" }
-# libnotcurses-sys = "2.4.7"
+# libnotcurses-sys = { git = "https://github.com/dankamongmen/libnotcurses-sys" }
+libnotcurses-sys = "= 3.1.2"
 reqwest = { version = "0.11", default-features = false, features = [
 "rustls-tls",
 "json"
@@ -22,6 +22,12 @@ toml = "0.5.8"
 filedescriptor = "0.8.1"
 serde = "1.0.130"
 log = "0.4.14"
+async-trait = "0.1.51"
+radix_trie = "0.2.1"
+phf = { version = "0.9", features = ["macros"] }
+sequence_trie = "*"
+env_logger = "*"
 
 [dev-dependencies]
 # libnotcurses-sys = {version = "2.4.5", path = "../../Repos/libnotcurses-sys"}
+enum-iterator = "0.7.0"

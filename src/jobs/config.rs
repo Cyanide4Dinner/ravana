@@ -1,5 +1,5 @@
-use anyhow::{ Result, /*Context*/ };
-use log::{ error, warn };
+use anyhow::Result;
+use log::{ error, info, warn };
 use std::{
     fs::File,
     io::prelude::*,
@@ -7,12 +7,8 @@ use std::{
 };
 
 use crate::def::app::CONFIG_DIR_PATHS;
-use super::util::{
-    config::{ Config },
-    // error::JobError
-};
+use super::util::config::Config;
 
-// TODO Integration test: Default struct and default Config.toml correspond.
 pub async fn load_config() -> Config {
     for path in CONFIG_DIR_PATHS {
         match File::open(Path::new(&format!("{}{}", path, "/Config.toml"))) {
@@ -20,6 +16,7 @@ pub async fn load_config() -> Config {
                 let mut contents = String::new();
                 if file.read_to_string(&mut contents).is_ok() {
                     if let Ok(config) = deserialize_toml(&contents) {
+                        info!("Using config at: {}", path);
                         return config
                     }
                 }
@@ -28,6 +25,7 @@ pub async fn load_config() -> Config {
             Err(e) => { warn!("Skipping opening file: {}, due to: {:?}", path, e); }
         }
     }
+    error!("Returning default config.");
     Config::default()
 }
 
@@ -43,20 +41,50 @@ fn deserialize_toml(s: &str) -> Result<Config, toml::de::Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::jobs::util::config::Config;
+    use std::collections::HashMap;
 
-    use super::deserialize_toml;
-
+    use super::{ Config, deserialize_toml };
+    use crate::jobs::{ InterfaceDes, ThemeDes, TuiPrefsDes };
+// Test deserialize_toml deserializes toml proper.
     #[test]
     fn test_deserialize_toml() {
-        let res_config: Config = deserialize_toml(r#"
+        let res_config: Config = deserialize_toml(r##"
             [key-bindings]
-            app_quit = "ABCDEFGHIJ"
-        "#).unwrap();
-        let mut exp_config = Config::default();
-        exp_config.key_bindings.app_quit = "ABCDEFGHIJ".to_owned();
-        assert_eq!(res_config, exp_config);
-        exp_config.key_bindings.app_quit = "ABC".to_owned();
-        assert_ne!(res_config, exp_config);
+            app_quit = "abcdefghi"
+
+            [tui]
+            interface.mouse-events-enable = false
+
+            theme.highlight-fg = "#222222"
+            theme.highlight-bg = "#333333"
+            theme.post-header-fg = "#444444"
+            theme.post-header-bg = "#555555"
+            theme.post-upvoted-fg = "#666666"
+            theme.post-upvoted-bg = "#777777"
+            theme.post-heading-fg = "#888888"
+            theme.post-heading-bg = "#999999"
+        "##).unwrap();
+        // let mut exp_config = Config::default();
+        // exp_config.key_bindings.app_quit = "ABCDEFGHIJ".to_owned();
+        assert_eq!(res_config, Config {
+            key_bindings: HashMap::from([
+                ("app_quit".to_owned(), "abcdefghi".to_owned())
+            ]),
+            tui: TuiPrefsDes {
+                interface: InterfaceDes {
+                    mouse_events_enable: false
+                },
+                theme: ThemeDes {
+                    highlight_fg: "#222222".to_string(),
+                    highlight_bg: "#333333".to_string(),
+                    post_header_fg: "#444444".to_string(),
+                    post_header_bg: "#555555".to_string(),
+                    post_upvoted_fg: "#666666".to_string(),
+                    post_upvoted_bg: "#777777".to_string(),
+                    post_heading_fg: "#888888".to_string(),
+                    post_heading_bg: "#999999".to_string()
+                }
+            }
+        });
     }
 }
