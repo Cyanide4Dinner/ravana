@@ -1,6 +1,6 @@
 use anyhow::{ anyhow, Result };
 use log::{ error, info };
-use libnotcurses_sys::NcPlane;
+use libnotcurses_sys::{ NcPlane, NcRgb };
 
 use crate::jobs::TuiPrefsDes;
 
@@ -116,6 +116,14 @@ impl Color {
             g
         })
     }    
+    
+    pub fn to_nc_rgb(&self) -> NcRgb {
+       let mut rgb: u32 = 0; 
+       rgb = rgb ^ ((self.r as u32) << 16);
+       rgb = rgb ^ ((self.g as u32) <<  8);
+       rgb = rgb ^ ((self.b as u32)      );
+       NcRgb(rgb)
+    }
 }
 
 pub struct InterfacePrefs {
