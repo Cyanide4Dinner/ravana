@@ -544,9 +544,9 @@ dependencies = [
 
 [[package]]
 name = "libnotcurses-sys"
-version = "3.1.2"
+version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f1f2d177ec8c400502deceb1514fe1237d15ee73466925d9e569f48c6120265"
+checksum = "b2b33240554342816c10ef83da5629476574bab13252504fdf37d26eeb699843"
 dependencies = [
  "bindgen",
  "cty",

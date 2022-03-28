@@ -1,9 +1,7 @@
 use anyhow::{ Context, Result };
 use libnotcurses_sys::{
     NcChannel,
-    NcChannelApi,
     NcChannels,
-    NcChannelsApi,
     NcPlane,
     NcPlaneOptions,
     c_api
@@ -28,24 +26,13 @@ pub struct SubListPost<'a> {
 
 impl<'a> SubListPost<'a> {
     fn draw_header(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
-        let header_bg_channel = NcChannel::from_rgb8(
-                tui_prefs.theme.post_header_bg.r,
-                tui_prefs.theme.post_header_bg.b,
-                tui_prefs.theme.post_header_bg.g,
-            );
-        let header_fg_channel = NcChannel::from_rgb8(
-                tui_prefs.theme.post_header_fg.r,
-                tui_prefs.theme.post_header_fg.b,
-                tui_prefs.theme.post_header_fg.g,
-            );
-        let upvoted_channel = NcChannels::from_rgb8(
-                tui_prefs.theme.post_upvoted_fg.r, 
-                tui_prefs.theme.post_upvoted_fg.b, 
-                tui_prefs.theme.post_upvoted_fg.g, 
-                tui_prefs.theme.post_upvoted_bg.r, 
-                tui_prefs.theme.post_upvoted_bg.b, 
-                tui_prefs.theme.post_upvoted_bg.g 
-            );
+        let header_bg_channel = NcChannel::from_rgb(tui_prefs.theme.post_header_bg.to_nc_rgb());
+        let header_fg_channel = NcChannel::from_rgb(tui_prefs.theme.post_header_fg.to_nc_rgb());
+
+        let upvoted_channel = NcChannels::from_rgb(
+            tui_prefs.theme.post_upvoted_fg.to_nc_rgb(),
+            tui_prefs.theme.post_upvoted_bg.to_nc_rgb()
+        );
 
         let header_combined_channel = NcChannels::combine(header_fg_channel, header_bg_channel);
 
@@ -97,16 +84,9 @@ impl<'a> SubListPost<'a> {
     }
 
     fn draw_heading(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
-        let heading_bg_channel = NcChannel::from_rgb8(
-                tui_prefs.theme.post_heading_bg.r,
-                tui_prefs.theme.post_heading_bg.g,
-                tui_prefs.theme.post_heading_bg.b,
-            );
-        let heading_fg_channel = NcChannel::from_rgb8(
-                tui_prefs.theme.post_heading_fg.r,
-                tui_prefs.theme.post_heading_fg.g,
-                tui_prefs.theme.post_heading_fg.b,
-            );
+        let heading_bg_channel = NcChannel::from_rgb(tui_prefs.theme.post_heading_bg.to_nc_rgb());
+        let heading_fg_channel = NcChannel::from_rgb(tui_prefs.theme.post_heading_fg.to_nc_rgb());
+
         let heading_combined_channel = NcChannels::combine(heading_fg_channel, heading_bg_channel);
 
         // Fill space as character to get color on whole line.
@@ -208,16 +188,8 @@ impl<'a> Widget for SubListPage<'a> {
                    ) -> Result<Self> {
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
-        plane.set_fg_rgb8(
-            tui_prefs.theme.highlight_fg.r,
-            tui_prefs.theme.highlight_fg.g,
-            tui_prefs.theme.highlight_fg.b,
-        );
-        plane.set_bg_rgb8(
-            tui_prefs.theme.highlight_bg.r,
-            tui_prefs.theme.highlight_bg.g,
-            tui_prefs.theme.highlight_bg.b,
-        );
+        plane.set_fchannel(NcChannel::from_rgb(tui_prefs.theme.highlight_fg.to_nc_rgb()));
+        plane.set_bchannel(NcChannel::from_rgb(tui_prefs.theme.highlight_bg.to_nc_rgb()));
         
         Ok(Self { 
             plane,
