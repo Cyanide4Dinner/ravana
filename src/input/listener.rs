@@ -28,29 +28,30 @@ pub async fn init(nc: Arc<Mutex<&mut Nc>>, kb: HashMap<String, String>, mpsc_sen
 }
 
 //TODO: Create tests for event loop checking and ensuring.
-//TODO: Use file descriptor IO multiplexing for waiting for input. (see notcurses_inputready_fd)
 async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender<Message>) -> Result<()> {
     info!("Begin input listening loop.");
     let mut buffer: KeyCombination = KeyCombination::new();
+    let mut input_details = NcInput::new_empty();
     loop {
         let mut nc_lock = nc.lock().unwrap(); // Lock Nc instance.
-        let mut input_details = NcInput::new_empty();
-        let recorded_input = nc_lock.get(Some(NcTime::new(0, 500000000)), Some(&mut input_details))?; // Block for 0.5 second.
-        drop(nc_lock); // Release the lock.
-        if let Some(mut key) = gen_key(&recorded_input, &input_details) {
-            buffer.append(&mut key); 
-            if let None = kbt.get_node(&buffer) { 
-                buffer.clear();
-            }
-            else {
-                // TODO: Find efficient way of detecting AppQuit, currently for this one detection
-                // all trait objects of UserEvent are made to have get_name()
-                if let Some(ue) = kbt.get(&buffer) {
-                    ue.trigger(mpsc_send.clone()).await?;
-                    if ue.get_name().eq("AppQuit") {
-                        return Ok(());
-                    }
+        if let Ok(()) = nc_lock.inputready_fd() {
+            let recorded_input = nc_lock.get_nblock(Some(&mut input_details))?;
+            drop(nc_lock); // Release the lock.
+            if let Some(mut key) = gen_key(&recorded_input, &input_details) {
+                buffer.append(&mut key); 
+                if let None = kbt.get_node(&buffer) { 
                     buffer.clear();
+                }
+                else {
+                    // TODO: Find efficient way of detecting AppQuit, currently for this one detection
+                    // all trait objects of UserEvent are made to have get_name()
+                    if let Some(ue) = kbt.get(&buffer) {
+                        ue.trigger(mpsc_send.clone()).await?;
+                        if ue.get_name().eq("AppQuit") {
+                            return Ok(());
+                        }
+                        buffer.clear();
+                    }
                 }
             }
         }
