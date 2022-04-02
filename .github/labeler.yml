@@ -1,14 +1,14 @@
 repo:
   - '*'
 test:
-  - 'src/tests/**/*'
+  - src/tests/**/*
 tui:
-  - 'src/tui/**/*'
+  - src/tui/**/*
 api:
-  - 'src/api/**/*'
+  - src/api/**/*
 documentation:
-  - 'docs/**/*'
+  - docs/**/*
 events:
-  - 'events/**/*'
+  - events/**/*
 state:
-  - 'state/**/*'
+  - state/**/*
