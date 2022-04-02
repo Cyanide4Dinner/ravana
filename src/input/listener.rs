@@ -1,5 +1,6 @@
 use anyhow::{ Context, Result };
 use libnotcurses_sys::{
+    c_api::notcurses_inputready_fd,
     Nc,
     NcInput,
     NcKey,
@@ -7,6 +8,7 @@ use libnotcurses_sys::{
     NcTime
 }; 
 use log::{ info, warn };
+use nix::poll::{ poll, PollFd, PollFlags };
 use std::{ collections::HashMap, sync::{ Arc, Mutex } };
 use tokio::sync::mpsc::Sender;
 
@@ -34,9 +36,18 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender
     let mut input_details = NcInput::new_empty();
     loop {
         let mut nc_lock = nc.lock().unwrap(); // Lock Nc instance.
-        if let Ok(()) = nc_lock.inputready_fd() {
+        let input_fd = PollFd::new(
+            unsafe { notcurses_inputready_fd(*nc_lock as &mut Nc as *mut Nc) },
+            PollFlags::POLLIN);
+        drop(nc_lock);
+
+        if let Ok(_) = poll(&mut [input_fd], -1) {
+            nc_lock = nc.lock().unwrap();
             let recorded_input = nc_lock.get_nblock(Some(&mut input_details))?;
-            drop(nc_lock); // Release the lock.
+            drop(nc_lock);
+            
+            info!("Just got {:?} {:?}", recorded_input, input_details);
+
             if let Some(mut key) = gen_key(&recorded_input, &input_details) {
                 buffer.append(&mut key); 
                 if let None = kbt.get_node(&buffer) { 
@@ -48,7 +59,7 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender
                     if let Some(ue) = kbt.get(&buffer) {
                         ue.trigger(mpsc_send.clone()).await?;
                         if ue.get_name().eq("AppQuit") {
-                            return Ok(());
+                            break;
                         }
                         buffer.clear();
                     }
@@ -56,6 +67,7 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender
             }
         }
     }
+    Ok(())
 } 
 
 //TODO: Test function to see if all keys are covered and all possibilities handled.

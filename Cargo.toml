@@ -26,7 +26,8 @@ async-trait = "0.1.51"
 radix_trie = "0.2.1"
 phf = { version = "0.9", features = ["macros"] }
 sequence_trie = "*"
-env_logger = "*"
+env_logger = "0.9.0"
+nix = "0.23.1"
 
 [dev-dependencies]
 # libnotcurses-sys = {version = "2.4.5", path = "../../Repos/libnotcurses-sys"}
