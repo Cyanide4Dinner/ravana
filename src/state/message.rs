@@ -1,4 +1,7 @@
+use libnotcurses_sys::NcInput;
+
 pub enum Message {
     InitTUI,
-    AppQuit
+    AppQuit,
+    CmdInput(NcInput)
 }

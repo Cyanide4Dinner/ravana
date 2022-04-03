@@ -1,6 +1,7 @@
 mod tui;
 mod app;
 mod util;
+mod command_palette;
 pub(super) mod page;
 pub(super) mod subreddit_listing_page;
 
@@ -9,3 +10,4 @@ pub use app::App;
 
 pub use util::{ TuiPrefs, val_tui_prefs_des };
 pub(super) use util::Widget;
+pub(super) use command_palette::CmdPalette;

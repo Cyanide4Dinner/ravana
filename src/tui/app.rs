@@ -1,6 +1,7 @@
 use anyhow::{ anyhow, Context, Result };
 use libnotcurses_sys::{
     Nc,
+    NcInput,
     NcMiceEvents,
     NcPlane,
     NcPlaneOptions
@@ -10,7 +11,8 @@ use std::sync::{ Arc, Mutex };
 
 use crate::tui::TuiPrefs;
 use super::subreddit_listing_page::SubListPage;
-use super::{ page::{ Page, PageType },
+use super::{CmdPalette,
+                page::{ Page, PageType },
                 subreddit_listing_page::SubListPostData,
                 util::new_child_plane,
                 Widget };
@@ -19,25 +21,37 @@ pub struct App<'a> {
         nc: Arc<Mutex<&'a mut Nc>>,
         plane: &'a mut NcPlane,
         tui_prefs: TuiPrefs,
-        pub pages: Vec<Box<dyn Page + 'a>>
+        pub pages: Vec<Box<dyn Page + 'a>>,
+
+        cmd_plt: CmdPalette<'a>
 }
 
 impl<'a> App<'a> {
     pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs) -> Result<App<'b>> {
         let mut nc_lock = nc.lock().unwrap();
         let stdplane = unsafe { nc_lock.stdplane() }; 
-        let (dim_x, dim_y) = nc_lock.term_dim_yx();
+        let (dim_y, dim_x) = nc_lock.term_dim_yx();
 
         if tui_prefs.interface.mouse_events_enable { nc_lock.mice_enable(NcMiceEvents::All)?; }
 
         drop(nc_lock);
+
+        let cmd_plt = CmdPalette::new(&tui_prefs,
+                                      stdplane,
+                                      0,
+                                      (stdplane.dim_y() - 1) as i32,
+                                      stdplane.dim_x(),
+                                      stdplane.dim_y()
+                                      )?;
 
         Ok(
             App {
                 nc,
                 plane: new_child_plane!(stdplane, 0, 0, dim_x, dim_y),
                 tui_prefs,
-                pages: Vec::new()
+                pages: Vec::new(),
+
+                cmd_plt
             }
         )
     }
@@ -63,7 +77,13 @@ impl<'a> App<'a> {
                 self.pages.push(Box::new(sub_list_page));
             }
         }
+
+        self.cmd_plt.plane.move_top();
         Ok(())
+    }
+
+    pub fn input_cmd_plt(&mut self, ncin: NcInput) -> Result<()> {
+        self.cmd_plt.input(ncin)
     }
 
     pub fn render(&mut self) -> Result<()> {

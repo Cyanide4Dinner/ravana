@@ -26,18 +26,22 @@ pub async fn manage(
         nc: Arc<Mutex<&mut Nc>>,
         tui_prefs_des: TuiPrefsDes,
         mut mpsc_recv: Receiver<Message>) -> Result<()> {
-    let mut app: App;
+    let mut app: App = init_tui(nc.clone(), &tui_prefs_des)?;
     loop {
         if let Some(ms) = mpsc_recv.recv().await {
             match ms {
+                Message::CmdInput(ncin) => {
+                    info!("CMD input!");
+                    app.input_cmd_plt(ncin)?;
+                },
                 InitTUI => {
                     info!("Message recieved: TUI init");
-                    app = init_tui(nc.clone(), &tui_prefs_des)?;
+                    // app = init_tui(nc.clone(), &tui_prefs_des)?;
                 },
                 AppQuit => {
                     info!("Message recieved: App quit");
                     return Ok(());
-                }
+                },
             } 
         }
         else {
