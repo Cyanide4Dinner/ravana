@@ -13,6 +13,7 @@ use std::{ collections::HashMap, sync::{ Arc, Mutex } };
 use tokio::sync::mpsc::Sender;
 
 use crate::events::app_events::init_tui;
+use crate::tui::CmdPalette;
 use crate::state::Message;
 use super::util::key_bindings::{ 
     create_key_bindings_trie,
@@ -34,6 +35,8 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender
     info!("Begin input listening loop.");
     let mut buffer: KeyCombination = KeyCombination::new();
     let mut input_details = NcInput::new_empty();
+
+    let mut cmd_input: bool = false;
     loop {
         let mut nc_lock = nc.lock().unwrap(); // Lock Nc instance.
         let input_fd = PollFd::new(
@@ -45,23 +48,36 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender
             nc_lock = nc.lock().unwrap();
             let recorded_input = nc_lock.get_nblock(Some(&mut input_details))?;
             drop(nc_lock);
-            
-            info!("Just got {:?} {:?}", recorded_input, input_details);
-
-            if let Some(mut key) = gen_key(&recorded_input, &input_details) {
-                buffer.append(&mut key); 
-                if let None = kbt.get_node(&buffer) { 
-                    buffer.clear();
+            if cmd_input { 
+                if let NcReceived::Event(NcKey::Esc) = recorded_input {
+                    cmd_input = false;
+                    continue;
                 }
-                else {
-                    // TODO: Find efficient way of detecting AppQuit, currently for this one detection
-                    // all trait objects of UserEvent are made to have get_name()
-                    if let Some(ue) = kbt.get(&buffer) {
-                        ue.trigger(mpsc_send.clone()).await?;
-                        if ue.get_name().eq("AppQuit") {
-                            break;
-                        }
+                if CmdPalette::val_input(&recorded_input) {
+                    mpsc_send.send(Message::CmdInput(input_details.clone())).await;
+                }
+            }
+            else {
+                if let NcReceived::Char(':') = recorded_input {
+                    cmd_input = true;
+                    continue;
+                }
+
+                if let Some(mut key) = gen_key(&recorded_input, &input_details) {
+                    buffer.append(&mut key);
+                    if let None = kbt.get_node(&buffer) {
                         buffer.clear();
+                    }
+                    else {
+                        // TODO: Find efficient way of detecting AppQuit, currently for this one detection
+                        // all trait objects of UserEvent are made to have get_name()
+                        if let Some(ue) = kbt.get(&buffer) {
+                            ue.trigger(mpsc_send.clone()).await?;
+                            if ue.get_name().eq("AppQuit") {
+                                break;
+                            }
+                            buffer.clear();
+                        }
                     }
                 }
             }

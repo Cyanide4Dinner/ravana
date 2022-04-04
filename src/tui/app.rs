@@ -41,7 +41,7 @@ impl<'a> App<'a> {
                                       0,
                                       (stdplane.dim_y() - 1) as i32,
                                       stdplane.dim_x(),
-                                      stdplane.dim_y()
+                                      1
                                       )?;
 
         Ok(
@@ -75,15 +75,17 @@ impl<'a> App<'a> {
                     comments: 78
                 })?;
                 self.pages.push(Box::new(sub_list_page));
+                self.cmd_plt.plane.move_top();
             }
         }
 
-        self.cmd_plt.plane.move_top();
         Ok(())
     }
 
+    // TODO: Find better ways of ordering planes as layers in App.
     pub fn input_cmd_plt(&mut self, ncin: NcInput) -> Result<()> {
-        self.cmd_plt.input(ncin)
+        self.cmd_plt.input(ncin)?;
+        self.render()
     }
 
     pub fn render(&mut self) -> Result<()> {
@@ -110,6 +112,9 @@ impl<'a> App<'a> {
 // -----------------------------------------------------------------------------------------------------------
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
+        // for page in self.pages.iter_mut() {
+        //     drop(page);
+        // }
         if let Err(err) = self.plane.destroy() {
             error!("Error dropping App plane: {}", err);
         }

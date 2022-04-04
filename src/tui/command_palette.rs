@@ -1,12 +1,14 @@
 use anyhow::{ anyhow, Result };
-use log::error;
+use log::{ error, info };
 use libnotcurses_sys::{
     c_api::{ ncreader, ncreader_offer_input },
     NcChannel,
     NcChannels,
     NcInput,
+    NcKey,
     NcPlane,
     NcPlaneOptions,
+    NcReceived,
     widgets::NcReaderOptions
 };
 
@@ -23,6 +25,15 @@ impl<'a> CmdPalette<'a> {
             Ok(())
         } else {
             Err(anyhow!("Unable to input to command palette: {:?}", ncin))
+        }
+    }
+
+    pub fn val_input(ncr: &NcReceived) -> bool {
+        match ncr {
+            NcReceived::Char(_) => true,
+            NcReceived::Event(NcKey::Left) => true,
+            NcReceived::Event(NcKey::Right) => true,
+            _ => false
         }
     }
 }
@@ -54,6 +65,8 @@ impl<'a> Widget for CmdPalette<'a> {
         header_fg_channel.set_g(200);
         header_fg_channel.set_b(0);
         let header_combined_channel = NcChannels::combine(header_fg_channel, header_bg_channel);
+
+        plane.set_channels(header_combined_channel);
 
         let reader = ncreader::with_options(
                 plane,
