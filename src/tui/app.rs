@@ -81,13 +81,17 @@ impl<'a> App<'a> {
     }
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// - Drop App -
+// -----------------------------------------------------------------------------------------------------------
+// - Stop Nc.
+// - Destroy App plane, which should destroy planes of all children widgets, since all children
+//   planes form a tree.
+// -----------------------------------------------------------------------------------------------------------
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
         if let Err(err) = self.plane.destroy() {
             error!("Error dropping App plane: {}", err);
-        }
-        for page in self.pages.iter_mut() {
-            drop(page);
         }
         if let Ok(mut nc_lock) = self.nc.lock() {
             unsafe { 
