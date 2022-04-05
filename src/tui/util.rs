@@ -177,8 +177,7 @@ impl TuiPrefs {
     }
 }
 
-// Drop trait because libnotcurses_sys doesn't call destructor methods.
-pub trait Widget: Sized + Drop {
+pub trait Widget: Sized {
     fn new(tui_prefs: &TuiPrefs,
             plane: &mut NcPlane,
             x: i32,
