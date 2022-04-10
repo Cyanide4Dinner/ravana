@@ -6,7 +6,11 @@ use tokio::sync::{ mpsc::Sender, oneshot };
 use crate::state::Message;
 use super::UserEvent;
 
+// -----------------------------------------------------------------------------------------------------------
+// * Send message to quit TUI.
+// -----------------------------------------------------------------------------------------------------------
 pub struct AppQuit;
+
 #[async_trait]
 impl UserEvent for AppQuit {
     fn get_name(&self) -> String {
@@ -23,17 +27,5 @@ impl UserEvent for AppQuit {
         } else {
             Err(anyhow!("AppQuit ACK not received."))
         }
-    }
-}
-
-// TODO: Create better solution for debug event.
-#[cfg(feature = "dev")]
-pub struct TestHello;
-#[async_trait]
-#[cfg(feature = "dev")]
-impl UserEvent for TestHello {
-    async fn trigger(&self) -> Result<()> {
-        println!("Hello <3.");
-        Ok(())
     }
 }

@@ -17,12 +17,22 @@ use super::{CmdPalette,
                 util::new_child_plane,
                 Widget };
 
+// -----------------------------------------------------------------------------------------------------------
+// * Primary base App.
+// * All widgets are subordinate to this.
+// * All widget planes are derived from this plane or its children.
+// * It represents the current state of TUI and the application.
+// -----------------------------------------------------------------------------------------------------------
 pub struct App<'a> {
+        // Nc instance.
         nc: Arc<Mutex<&'a mut Nc>>,
         plane: &'a mut NcPlane,
         tui_prefs: TuiPrefs,
+
+        // Pages currently in the application.
         pub pages: Vec<Box<dyn Page + 'a>>,
 
+        // Command palette widget.
         cmd_plt: CmdPalette<'a>
 }
 
@@ -58,6 +68,7 @@ impl<'a> App<'a> {
         )
     }
 
+    // Add a new page.
     pub fn add_page(&mut self, page_type: PageType) -> Result<()> {
         match page_type {
             PageType::SubredditListing => {
@@ -90,6 +101,7 @@ impl<'a> App<'a> {
         self.render()
     }
 
+    // Render TUI.
     pub fn render(&mut self) -> Result<()> {
         for page in self.pages.iter_mut() {
             page.draw(&self.tui_prefs)?;
@@ -106,10 +118,8 @@ impl<'a> App<'a> {
 }
 
 // -----------------------------------------------------------------------------------------------------------
-// - Drop App -
-// -----------------------------------------------------------------------------------------------------------
-// - Stop Nc.
-// - Destroy App plane, which should destroy planes of all children widgets, since all children
+// * Stop Nc.
+// * Destroy App plane, which should destroy planes of all children widgets, since all children
 //   planes form a tree.
 // -----------------------------------------------------------------------------------------------------------
 impl<'a> Drop for App<'a> {

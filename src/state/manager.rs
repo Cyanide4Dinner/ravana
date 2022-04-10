@@ -13,6 +13,7 @@ use crate::{
     tui::{ App, init_tui }
 };
 
+// Initialize state manager.
 pub async fn init(
         nc: Arc<Mutex<&mut Nc>>, 
         tui_prefs_des: TuiPrefsDes,
@@ -22,6 +23,11 @@ pub async fn init(
     Ok(())
 }
 
+// TODO: Figure out need for InitTUI.
+
+// -----------------------------------------------------------------------------------------------------------
+// * Listen for event message and manipulate state of app or trigger new events.
+// -----------------------------------------------------------------------------------------------------------
 pub async fn manage(
         nc: Arc<Mutex<&mut Nc>>,
         tui_prefs_des: TuiPrefsDes,

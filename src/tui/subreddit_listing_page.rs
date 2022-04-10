@@ -10,6 +10,7 @@ use log::error;
 
 use super::{  page::Page, TuiPrefs, Widget, util::new_child_plane };
 
+// Data to display in a post item of subreddit listing.
 pub struct SubListPostData<'a> {
     pub upvotes: u32,
     pub heading: &'a str,
@@ -19,6 +20,7 @@ pub struct SubListPostData<'a> {
     pub comments: u32
 }
 
+// Subreddit lisitng post item widget.
 pub struct SubListPost<'a> {
     plane: &'a mut NcPlane,
     data: SubListPostData<'a>
@@ -67,6 +69,7 @@ impl<'a> SubListPost<'a> {
             header_combined_channel,
         )?;
 
+        // If upvoted, indicate by different color.
         let upvoted = true;
         if upvoted {
             self.plane.stain(
@@ -140,13 +143,16 @@ impl<'a> Widget for SubListPost<'a> {
     }
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// Page for displaying subreddit listing.
+// -----------------------------------------------------------------------------------------------------------
 pub struct SubListPage<'a> {
     plane: &'a mut NcPlane,
     posts: Vec<SubListPost<'a>>
 }
 
 impl<'a> SubListPage<'a> {
-    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, _data: SubListPostData<'a>) -> Result<()> {
+    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, data: SubListPostData<'a>) -> Result<()> {
         self.posts.push(SubListPost::new(
                 tui_prefs,
                 self.plane,

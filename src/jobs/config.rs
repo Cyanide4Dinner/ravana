@@ -9,14 +9,19 @@ use std::{
 use crate::def::app::CONFIG_DIR_PATHS;
 use super::util::config::Config;
 
+// -----------------------------------------------------------------------------------------------------------
+// * Open up Config.toml for reading.
+// * Deserialize to Config struct.
+// -----------------------------------------------------------------------------------------------------------
 pub async fn load_config() -> Config {
+    debug!("Loading config.");
     for path in CONFIG_DIR_PATHS {
         match File::open(Path::new(&format!("{}{}", path, "/Config.toml"))) {
             Ok(mut file) => {
                 let mut contents = String::new();
                 if file.read_to_string(&mut contents).is_ok() {
                     if let Ok(config) = deserialize_toml(&contents) {
-                        debug!("Using config at: {}", path);
+                        info!("Using config at: {}", path);
                         return config
                     }
                 }
@@ -25,7 +30,7 @@ pub async fn load_config() -> Config {
             Err(e) => { warn!("Skipping opening file: {}, due to: {:?}", path, e); }
         }
     }
-    error!("Returning default config.");
+    error!("Unable to open config file. Returning default config.");
     Config::default()
 }
 
@@ -45,7 +50,8 @@ mod tests {
 
     use super::{ Config, deserialize_toml };
     use crate::jobs::{ InterfaceDes, ThemeDes, TuiPrefsDes };
-// Test deserialize_toml deserializes toml proper.
+
+    // Test if deserialize_toml deserializes toml proper.
     #[test]
     fn test_deserialize_toml() {
         let res_config: Config = deserialize_toml(r##"

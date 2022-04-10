@@ -1,15 +1,15 @@
 pub mod key_bindings {
     use anyhow::{ anyhow, Result };
     #[cfg(test)]
-    use enum_iterator::IntoEnumIterator;
-    use log::info;
+    use enum_iterator::IntoEnumIterator; // Required in a unit test.
+    use log::{ debug, info };
     use phf::{ phf_map, Map };
     use sequence_trie::SequenceTrie;
     use std::collections::HashMap;
 
     use crate::events::{get_user_event, UserEvent};
     
-    // Supported keys
+    // Supported keys.
     #[cfg_attr(test, derive(IntoEnumIterator))]
     #[derive(Clone, Debug, Eq, Hash, PartialEq)]
     pub enum Key {
@@ -134,6 +134,7 @@ pub mod key_bindings {
     };
 
 
+    // For a unit test.
     #[cfg(test)]
     #[allow(unreachable_patterns)]
     pub(super) fn key_to_code(key: &Key) -> Result<u8> {
@@ -222,6 +223,7 @@ pub mod key_bindings {
         Ok(kb_trie)
     }
 
+    // Parse key combination string to KeyCombination.
     pub(super) fn parse_to_key_combination(key_comb_str: &str) -> Result<KeyCombination> {    
         let mut key_comb: Vec<Key> = Vec::new();
         let find_key = |s: &str| -> Result<Key> {
@@ -233,16 +235,22 @@ pub mod key_bindings {
         for (i, c) in key_comb_str.chars().enumerate() {
             match c {
                 '<' => { 
-                    if is_special_key { return Err(anyhow!("Invalid key-binding format {}, < wrongly placed", key_comb_str)); }
+                    if is_special_key { 
+                        return Err(anyhow!("Invalid key-binding format {}, < wrongly placed", key_comb_str));
+                    }
                     is_special_key = true; special_key_index = i+1; 
                 },
                 '-' => {
-                    if !is_special_key { return Err(anyhow!("Invalid key-binding format {}, - wrongly placed", key_comb_str)); }
+                    if !is_special_key { 
+                        return Err(anyhow!("Invalid key-binding format {}, - wrongly placed", key_comb_str));
+                    }
                     key_comb.push(find_key(&key_comb_str[special_key_index..i])?);
                     special_key_index = i+1;
                 },
                 '>' => {
-                    if !is_special_key { return Err(anyhow!("Invalid key-binding format {}, > wrongly placed", key_comb_str)); }
+                    if !is_special_key { 
+                        return Err(anyhow!("Invalid key-binding format {}, > wrongly placed", key_comb_str));
+                    }
                     key_comb.push(find_key(&key_comb_str[special_key_index..i])?);
                     is_special_key = false; 
                 },
@@ -283,14 +291,18 @@ mod tests {
         for res_key in key_bindings_res.keys() {
             if let Some(res_val) = key_bindings_res.get(res_key) {
                 if let Some(exp_val) = DEFAULT_KEY_BINDINGS.get(&res_key) { assert_eq!(exp_val, res_val); }
-                else { return Err(anyhow!("Cannot find key-value in default key-binding map for {}", res_key)); }
+                else { 
+                    return Err(anyhow!("Cannot find key-value in default key-binding map for {}", res_key));
+                }
             }
         }
 
         for exp_key in DEFAULT_KEY_BINDINGS.keys() {
             if let Some(exp_val) = DEFAULT_KEY_BINDINGS.get(exp_key) {
                 if let Some(res_val) = key_bindings_res.get(exp_key.to_owned()) { assert_eq!(exp_val, res_val); } 
-                else { return Err(anyhow!("Cannot find key-value in default Config.toml for {}", exp_key)); }
+                else { 
+                    return Err(anyhow!("Cannot find key-value in default Config.toml for {}", exp_key));
+                }
             }
         }
         Ok(())

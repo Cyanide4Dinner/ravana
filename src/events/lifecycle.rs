@@ -9,9 +9,14 @@ use crate::jobs::config::load_config;
 use crate::state::{ manager::init as manager_init, Message };
 use crate::tui::val_tui_prefs_des;
 
-//TODO: Close nc.
+// -----------------------------------------------------------------------------------------------------------
+// Initialize application -
+// * Load config.
+// * Create Nc instance.
+// * Create channel for input -> manager communication.
+// * Spawn input listener and manager (TUI) jobs.
+// -----------------------------------------------------------------------------------------------------------
 pub async fn init() -> Result<()> {
-    debug!("Loading config.");
     let config = load_config().await;
 
     // Validate config

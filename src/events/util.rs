@@ -12,7 +12,7 @@ pub trait UserEvent: Send {
     async fn trigger(&self, mpsc_send: Sender<Message>) -> Result<()>;
 }
 
-// Fetch dynamically dispatched UserEvent corresponding to "Field-name" in Config.toml
+// Fetch dynamically dispatched UserEvent corresponding to "Field-name" in Config.toml.
 pub fn get_user_event(field_name: &str) -> Result<Box<dyn UserEvent>> {
     match field_name {
         "app_quit" => { Ok(Box::new(user_events::AppQuit)) },
