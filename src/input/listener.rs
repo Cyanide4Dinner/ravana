@@ -7,9 +7,10 @@ use libnotcurses_sys::{
     NcReceived,
     NcTime
 }; 
-use log::{ info, warn };
+use log::{ error, info, warn };
 use nix::poll::{ poll, PollFd, PollFlags };
 use std::{ collections::HashMap, sync::{ Arc, Mutex } };
+use std::{thread, time};
 use tokio::sync::mpsc::Sender;
 
 use crate::events::app_events::init_tui;
@@ -36,47 +37,61 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender
     let mut buffer: KeyCombination = KeyCombination::new();
     let mut input_details = NcInput::new_empty();
 
+    // COMMAND INPUT MODE
     let mut cmd_input: bool = false;
-    loop {
-        let mut nc_lock = nc.lock().unwrap(); // Lock Nc instance.
-        let input_fd = PollFd::new(
-            unsafe { notcurses_inputready_fd(*nc_lock as &mut Nc as *mut Nc) },
-            PollFlags::POLLIN);
-        drop(nc_lock);
 
+    let mut nc_lock = nc.lock().unwrap();
+    let input_fd = PollFd::new(
+        unsafe { notcurses_inputready_fd(*nc_lock as &mut Nc as *mut Nc) },
+        PollFlags::POLLIN);
+    drop(nc_lock);
+
+    loop {
         if let Ok(_) = poll(&mut [input_fd], -1) {
             nc_lock = nc.lock().unwrap();
             let recorded_input = nc_lock.get_nblock(Some(&mut input_details))?;
             drop(nc_lock);
-            if cmd_input { 
+
+            if cmd_input { // COMMAND INPUT MODE - true.
+                info!("Got in cmd {:?} {:?}", recorded_input, input_details);
                 if let NcReceived::Event(NcKey::Esc) = recorded_input {
+                    // Switch out of COMMAND INPUT MODE.
+                    info!("COMMAND INPUT MODE - OFF");
                     cmd_input = false;
                     continue;
-                }
-                if CmdPalette::val_input(&recorded_input) {
-                    mpsc_send.send(Message::CmdInput(input_details.clone())).await;
-                }
-            }
-            else {
-                if let NcReceived::Char(':') = recorded_input {
-                    cmd_input = true;
-                    continue;
-                }
-
-                if let Some(mut key) = gen_key(&recorded_input, &input_details) {
-                    buffer.append(&mut key);
-                    if let None = kbt.get_node(&buffer) {
-                        buffer.clear();
+                } else {
+                    if CmdPalette::val_input(&recorded_input) {
+                        mpsc_send.send(Message::CmdInput(input_details.clone())).await;
                     }
-                    else {
-                        // TODO: Find efficient way of detecting AppQuit, currently for this one detection
-                        // all trait objects of UserEvent are made to have get_name()
-                        if let Some(ue) = kbt.get(&buffer) {
-                            ue.trigger(mpsc_send.clone()).await?;
-                            if ue.get_name().eq("AppQuit") {
-                                break;
-                            }
+                }
+            } else { // COMMAND INPUT MODE - false
+                if let NcReceived::Char(':') = recorded_input {
+                    // Switch to COMMAND INPUT MODE.
+                    info!("COMMAND INPUT MODE - ON");
+                    cmd_input = true;
+                    buffer.clear();
+                    continue;
+                } else {
+                    if let Some(mut key) = gen_key(&recorded_input, &input_details) {
+                        info!("Got in not cmd {:?} {:?}", recorded_input, input_details);
+                        buffer.append(&mut key);
+                        if let None = kbt.get_node(&buffer) {
                             buffer.clear();
+                        }
+                        else {
+                            // TODO: Find efficient way of detecting AppQuit, currently for this one detection
+                            // all trait objects of UserEvent are made to have get_name()
+                            if let Some(ue) = kbt.get(&buffer) {
+                                // if let Err(err) = mpsc_send.send(Message::AppQuit).await {
+                                //     error!("{}", err);
+                                // };
+                                ue.trigger(mpsc_send.clone()).await?;
+                                if ue.get_name().eq("AppQuit") {
+                                    // thread::sleep(time::Duration::from_secs(3));
+                                    break;
+                                }
+                                buffer.clear();
+                            }
                         }
                     }
                 }

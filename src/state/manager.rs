@@ -31,14 +31,16 @@ pub async fn manage(
         if let Some(ms) = mpsc_recv.recv().await {
             match ms {
                 Message::CmdInput(ncin) => {
-                    info!("CMD input!");
+                    // info!("CMD input!");
                     app.input_cmd_plt(ncin)?;
                 },
-                InitTUI => {
+                Message::InitTUI => {
                     info!("Message recieved: TUI init");
                     // app = init_tui(nc.clone(), &tui_prefs_des)?;
                 },
-                AppQuit => {
+                Message::AppQuit(tx) => {
+                    drop(app);
+                    tx.send(true);
                     info!("Message recieved: App quit");
                     return Ok(());
                 },

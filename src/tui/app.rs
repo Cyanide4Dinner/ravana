@@ -36,8 +36,10 @@ impl<'a> App<'a> {
 
         drop(nc_lock);
 
+        let app_plane = new_child_plane!(stdplane, 0, 0, dim_x, dim_y);
+
         let cmd_plt = CmdPalette::new(&tui_prefs,
-                                      stdplane,
+                                      app_plane,
                                       0,
                                       (stdplane.dim_y() - 1) as i32,
                                       stdplane.dim_x(),
@@ -47,7 +49,7 @@ impl<'a> App<'a> {
         Ok(
             App {
                 nc,
-                plane: new_child_plane!(stdplane, 0, 0, dim_x, dim_y),
+                plane: app_plane,
                 tui_prefs,
                 pages: Vec::new(),
 
@@ -95,7 +97,7 @@ impl<'a> App<'a> {
 
         if let Ok(mut nc_lock) = self.nc.lock() {
             nc_lock.render().context("Nc render failed.")?;
-            info!("Rendered app.");
+            // info!("Rendered app.");
             return Ok(())
         }
         error!("Failed to render app: unable to lock Nc.");
@@ -115,6 +117,11 @@ impl<'a> Drop for App<'a> {
         // for page in self.pages.iter_mut() {
         //     drop(page);
         // }
+        info!("Dropping App.");
+
+        // Destroy ncreader before destroying base plane or Nc instance.
+        self.cmd_plt.destory_reader();
+
         if let Err(err) = self.plane.destroy() {
             error!("Error dropping App plane: {}", err);
         }

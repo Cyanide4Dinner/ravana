@@ -1,7 +1,7 @@
-use anyhow::Result;
+use anyhow::{ anyhow, Result };
 use async_trait::async_trait;
-use log::error;
-use tokio::sync::mpsc::Sender;
+use log::{ error, info };
+use tokio::sync::{ mpsc::Sender, oneshot };
 
 use crate::state::Message;
 use super::UserEvent;
@@ -13,10 +13,16 @@ impl UserEvent for AppQuit {
         "AppQuit".to_string()
     }
     async fn trigger(&self, mpsc_send: Sender<Message>) -> Result<()> {
-        if let Err(err) = mpsc_send.send(Message::AppQuit).await { 
+        info!("AppQuit triggered.");
+        let (tx, rx) = oneshot::channel::<bool>();
+        if let Err(err) = mpsc_send.send(Message::AppQuit(tx)).await { 
             error!("Error sending message AppQuit: {}", err);
         }
-        Ok(())
+        if let Ok(true) = rx.await {
+            Ok(())
+        } else {
+            Err(anyhow!("AppQuit ACK not received."))
+        }
     }
 }
 

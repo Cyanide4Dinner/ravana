@@ -1,7 +1,7 @@
 use anyhow::{ anyhow, Result };
 use log::{ error, info };
 use libnotcurses_sys::{
-    c_api::{ ncreader, ncreader_offer_input },
+    c_api::{ ncreader, ncreader_destroy, ncreader_offer_input },
     NcChannel,
     NcChannels,
     NcInput,
@@ -36,13 +36,10 @@ impl<'a> CmdPalette<'a> {
             _ => false
         }
     }
-}
 
-impl<'a> Drop for CmdPalette<'a> {
-    fn drop(&mut self) {
-        if let Err(err) = self.plane.destroy() {
-            error!("Error dropping CmdPalette plane: {}", err);
-        }
+    pub fn destory_reader(&mut self) {
+        info!("Destroying CmdPalette.");
+        unsafe { ncreader_destroy(self.reader, std::ptr::null::<*mut *mut i8>() as *mut *mut i8) }
     }
 }
 
