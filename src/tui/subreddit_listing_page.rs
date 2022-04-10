@@ -112,7 +112,7 @@ impl<'a> SubListPost<'a> {
 }
 
 impl<'a> Widget for SubListPost<'a> {
-    fn new(_tui_prefs: &TuiPrefs,
+    fn new(tui_prefs: &TuiPrefs,
                     parent_plane: &mut NcPlane,
                     x: i32,
                     y: i32,

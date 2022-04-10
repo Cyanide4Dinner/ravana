@@ -1,6 +1,7 @@
 use anyhow::{ anyhow, Context, Result };
 use libnotcurses_sys::{
     Nc,
+    NcInput,
     NcMiceEvents,
     NcPlane,
     NcPlaneOptions
@@ -10,7 +11,8 @@ use std::sync::{ Arc, Mutex };
 
 use crate::tui::TuiPrefs;
 use super::subreddit_listing_page::SubListPage;
-use super::{ page::{ Page, PageType },
+use super::{CmdPalette,
+                page::{ Page, PageType },
                 subreddit_listing_page::SubListPostData,
                 util::new_child_plane,
                 Widget };
@@ -19,25 +21,39 @@ pub struct App<'a> {
         nc: Arc<Mutex<&'a mut Nc>>,
         plane: &'a mut NcPlane,
         tui_prefs: TuiPrefs,
-        pub pages: Vec<Box<dyn Page + 'a>>
+        pub pages: Vec<Box<dyn Page + 'a>>,
+
+        cmd_plt: CmdPalette<'a>
 }
 
 impl<'a> App<'a> {
     pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs) -> Result<App<'b>> {
         let mut nc_lock = nc.lock().unwrap();
         let stdplane = unsafe { nc_lock.stdplane() }; 
-        let (dim_x, dim_y) = nc_lock.term_dim_yx();
+        let (dim_y, dim_x) = nc_lock.term_dim_yx();
 
         if tui_prefs.interface.mouse_events_enable { nc_lock.mice_enable(NcMiceEvents::All)?; }
 
         drop(nc_lock);
 
+        let app_plane = new_child_plane!(stdplane, 0, 0, dim_x, dim_y);
+
+        let cmd_plt = CmdPalette::new(&tui_prefs,
+                                      app_plane,
+                                      0,
+                                      (stdplane.dim_y() - 1) as i32,
+                                      stdplane.dim_x(),
+                                      1
+                                      )?;
+
         Ok(
             App {
                 nc,
-                plane: new_child_plane!(stdplane, 0, 0, dim_x, dim_y),
+                plane: app_plane,
                 tui_prefs,
-                pages: Vec::new()
+                pages: Vec::new(),
+
+                cmd_plt
             }
         )
     }
@@ -61,9 +77,17 @@ impl<'a> App<'a> {
                     comments: 78
                 })?;
                 self.pages.push(Box::new(sub_list_page));
+                self.cmd_plt.plane.move_top();
             }
         }
+
         Ok(())
+    }
+
+    // TODO: Find better ways of ordering planes as layers in App.
+    pub fn input_cmd_plt(&mut self, ncin: NcInput) -> Result<()> {
+        self.cmd_plt.input(ncin)?;
+        self.render()
     }
 
     pub fn render(&mut self) -> Result<()> {
@@ -73,7 +97,7 @@ impl<'a> App<'a> {
 
         if let Ok(mut nc_lock) = self.nc.lock() {
             nc_lock.render().context("Nc render failed.")?;
-            info!("Rendered app.");
+            // info!("Rendered app.");
             return Ok(())
         }
         error!("Failed to render app: unable to lock Nc.");
@@ -90,6 +114,14 @@ impl<'a> App<'a> {
 // -----------------------------------------------------------------------------------------------------------
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
+        // for page in self.pages.iter_mut() {
+        //     drop(page);
+        // }
+        info!("Dropping App.");
+
+        // Destroy ncreader before destroying base plane or Nc instance.
+        self.cmd_plt.destory_reader();
+
         if let Err(err) = self.plane.destroy() {
             error!("Error dropping App plane: {}", err);
         }

@@ -7,7 +7,7 @@ use super::user_events;
 
 // Encapsulated event for key-bindings.
 #[async_trait]
-pub trait UserEvent {
+pub trait UserEvent: Send {
     fn get_name(&self) -> String;
     async fn trigger(&self, mpsc_send: Sender<Message>) -> Result<()>;
 }

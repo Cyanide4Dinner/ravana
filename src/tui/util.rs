@@ -190,7 +190,7 @@ pub trait Widget: Sized {
 
 macro_rules! new_child_plane {
     { $parent_plane: expr, $x: expr, $y: expr, $dim_x: expr, $dim_y: expr} => {
-        NcPlane::new_child($parent_plane, &NcPlaneOptions::new($x, $y, $dim_x, $dim_y))?
+        NcPlane::new_child($parent_plane, &NcPlaneOptions::new($y, $x, $dim_y, $dim_x))?
     }
 }
 pub(super) use new_child_plane;
