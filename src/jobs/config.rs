@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::{ error, info, warn };
+use log::{ debug, error, info, warn };
 use std::{
     fs::File,
     io::prelude::*,
@@ -16,7 +16,7 @@ pub async fn load_config() -> Config {
                 let mut contents = String::new();
                 if file.read_to_string(&mut contents).is_ok() {
                     if let Ok(config) = deserialize_toml(&contents) {
-                        info!("Using config at: {}", path);
+                        debug!("Using config at: {}", path);
                         return config
                     }
                 }

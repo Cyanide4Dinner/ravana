@@ -1,6 +1,6 @@
 use anyhow::{ anyhow, Result };
 use async_trait::async_trait;
-use log::{ error, info };
+use log::{ debug, error, info };
 use tokio::sync::{ mpsc::Sender, oneshot };
 
 use crate::state::Message;
@@ -13,7 +13,7 @@ impl UserEvent for AppQuit {
         "AppQuit".to_string()
     }
     async fn trigger(&self, mpsc_send: Sender<Message>) -> Result<()> {
-        info!("AppQuit triggered.");
+        debug!("AppQuit triggered.");
         let (tx, rx) = oneshot::channel::<bool>();
         if let Err(err) = mpsc_send.send(Message::AppQuit(tx)).await { 
             error!("Error sending message AppQuit: {}", err);

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::{ info, warn };
+use log::{ debug, info, warn };
 use libnotcurses_sys::{
     Nc
 };
@@ -35,13 +35,13 @@ pub async fn manage(
                     app.input_cmd_plt(ncin)?;
                 },
                 Message::InitTUI => {
-                    info!("Message recieved: TUI init");
+                    debug!("Message recieved: TUI init");
                     // app = init_tui(nc.clone(), &tui_prefs_des)?;
                 },
                 Message::AppQuit(tx) => {
                     drop(app);
                     tx.send(true);
-                    info!("Message recieved: App quit");
+                    debug!("Message recieved: App quit");
                     return Ok(());
                 },
             } 

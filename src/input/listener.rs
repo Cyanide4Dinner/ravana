@@ -7,7 +7,7 @@ use libnotcurses_sys::{
     NcReceived,
     NcTime
 }; 
-use log::{ error, info, warn };
+use log::{ debug, error, info, warn };
 use nix::poll::{ poll, PollFd, PollFlags };
 use std::{ collections::HashMap, sync::{ Arc, Mutex } };
 use std::{thread, time};
@@ -24,7 +24,7 @@ use super::util::key_bindings::{
 };
 
 pub async fn init(nc: Arc<Mutex<&mut Nc>>, kb: HashMap<String, String>, mpsc_send: Sender<Message>) -> Result<()> {
-    info!("Init input listener.");
+    debug!("Init input listener.");
     let kbt = create_key_bindings_trie(&kb).context("Error parsing key-bindings.")?;
     init_tui(mpsc_send.clone()).await?; 
     listen(nc, kbt, mpsc_send.clone()).await?;
@@ -33,7 +33,7 @@ pub async fn init(nc: Arc<Mutex<&mut Nc>>, kb: HashMap<String, String>, mpsc_sen
 
 //TODO: Create tests for event loop checking and ensuring.
 async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender<Message>) -> Result<()> {
-    info!("Begin input listening loop.");
+    debug!("Begin input listening loop.");
     let mut buffer: KeyCombination = KeyCombination::new();
     let mut input_details = NcInput::new_empty();
 
@@ -53,10 +53,10 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender
             drop(nc_lock);
 
             if cmd_input { // COMMAND INPUT MODE - true.
-                info!("Got in cmd {:?} {:?}", recorded_input, input_details);
+                debug!("Got in cmd {:?} {:?}", recorded_input, input_details);
                 if let NcReceived::Event(NcKey::Esc) = recorded_input {
                     // Switch out of COMMAND INPUT MODE.
-                    info!("COMMAND INPUT MODE - OFF");
+                    debug!("COMMAND INPUT MODE - OFF");
                     cmd_input = false;
                     continue;
                 } else {
@@ -67,13 +67,13 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender
             } else { // COMMAND INPUT MODE - false
                 if let NcReceived::Char(':') = recorded_input {
                     // Switch to COMMAND INPUT MODE.
-                    info!("COMMAND INPUT MODE - ON");
+                    debug!("COMMAND INPUT MODE - ON");
                     cmd_input = true;
                     buffer.clear();
                     continue;
                 } else {
                     if let Some(mut key) = gen_key(&recorded_input, &input_details) {
-                        info!("Got in not cmd {:?} {:?}", recorded_input, input_details);
+                        debug!("Got in not cmd {:?} {:?}", recorded_input, input_details);
                         buffer.append(&mut key);
                         if let None = kbt.get_node(&buffer) {
                             buffer.clear();
@@ -173,7 +173,7 @@ fn gen_key(ncr: &NcReceived, id: &NcInput) -> Option<KeyCombination> {
                 &NcKey::PgUp => { key_comb_vec.push(Key::KeyPageUp); },
                 &NcKey::PgDown => { key_comb_vec.push(Key::KeyPageDown); },
                 _ => { 
-                    info!("User input: {:?} {:?}", ncr, id);
+                    debug!("User input: {:?} {:?}", ncr, id);
                     warn!("Found no key matching for event."); return None;
                 }
             }

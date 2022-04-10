@@ -6,7 +6,7 @@ use libnotcurses_sys::{
     NcPlane,
     NcPlaneOptions
 };
-use log::{ error, info };
+use log::{ debug, error, info };
 use std::sync::{ Arc, Mutex };
 
 use crate::tui::TuiPrefs;
@@ -117,7 +117,7 @@ impl<'a> Drop for App<'a> {
         // for page in self.pages.iter_mut() {
         //     drop(page);
         // }
-        info!("Dropping App.");
+        debug!("Dropping App.");
 
         // Destroy ncreader before destroying base plane or Nc instance.
         self.cmd_plt.destory_reader();

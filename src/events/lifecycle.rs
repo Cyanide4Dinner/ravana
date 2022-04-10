@@ -1,6 +1,6 @@
 use anyhow::{ anyhow, Result };
 use libnotcurses_sys::*;
-use log::{ error, info };
+use log::{ debug, error, info };
 use std::sync::{ Mutex, Arc };
 use tokio::sync::mpsc;
 
@@ -11,13 +11,13 @@ use crate::tui::val_tui_prefs_des;
 
 //TODO: Close nc.
 pub async fn init() -> Result<()> {
-    info!("Loading config.");
+    debug!("Loading config.");
     let config = load_config().await;
 
     // Validate config
     // TODO: Validate key-bindings
     {
-        info!("Validating config.");
+        debug!("Validating config.");
         if !val_tui_prefs_des(&config.tui) { 
             error!("Invalid TUI format in config.");
             return Err(anyhow!("Invalid TUI format in config."));

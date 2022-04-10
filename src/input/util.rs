@@ -209,7 +209,7 @@ pub mod key_bindings {
     pub type KeyBindingsTrie = SequenceTrie<Key, Box<dyn UserEvent>>;
 
     pub fn create_key_bindings_trie(kb: &HashMap<String, String>) -> Result<KeyBindingsTrie> {
-        info!("Creating key-bindings trie.");
+        debug!("Creating key-bindings trie.");
         let mut kb_trie: KeyBindingsTrie = KeyBindingsTrie::new();
         for (&key, &def_val) in DEFAULT_KEY_BINDINGS.entries() {
             if let Some(val) = kb.get(key) {

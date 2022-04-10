@@ -1,5 +1,5 @@
 use anyhow::{ anyhow, Result };
-use log::{ error, info };
+use log::{ debug, error, info };
 use libnotcurses_sys::{
     c_api::{ ncreader, ncreader_destroy, ncreader_offer_input },
     NcChannel,
@@ -38,7 +38,7 @@ impl<'a> CmdPalette<'a> {
     }
 
     pub fn destory_reader(&mut self) {
-        info!("Destroying CmdPalette.");
+        debug!("Destroying CmdPalette.");
         unsafe { ncreader_destroy(self.reader, std::ptr::null::<*mut *mut i8>() as *mut *mut i8) }
     }
 }
