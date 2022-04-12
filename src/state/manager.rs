@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::{ info, warn };
+use log::{ debug, info, warn };
 use libnotcurses_sys::{
     Nc
 };
@@ -13,19 +13,28 @@ use crate::{
     tui::{ App, init_tui }
 };
 
+// Initialize state manager.
 pub async fn init(
         nc: Arc<Mutex<&mut Nc>>, 
         tui_prefs_des: TuiPrefsDes,
         mpsc_recv: Receiver<Message>) -> Result<()> {
+    // TODO: Remove sleep.
     thread::sleep(time::Duration::new(5,0));
+
     manage(nc, tui_prefs_des, mpsc_recv).await?;
     Ok(())
 }
 
+// TODO: Figure out need for InitTUI.
+
+// -----------------------------------------------------------------------------------------------------------
+// * Listen for event message and manipulate state of app or trigger new events.
+// -----------------------------------------------------------------------------------------------------------
 pub async fn manage(
         nc: Arc<Mutex<&mut Nc>>,
         tui_prefs_des: TuiPrefsDes,
         mut mpsc_recv: Receiver<Message>) -> Result<()> {
+    debug!("Starting manager listener loop.");
     let mut app: App = init_tui(nc.clone(), &tui_prefs_des)?;
     loop {
         if let Some(ms) = mpsc_recv.recv().await {
@@ -35,13 +44,13 @@ pub async fn manage(
                     app.input_cmd_plt(ncin)?;
                 },
                 Message::InitTUI => {
-                    info!("Message recieved: TUI init");
+                    debug!("Message recieved: TUI init");
                     // app = init_tui(nc.clone(), &tui_prefs_des)?;
                 },
                 Message::AppQuit(tx) => {
                     drop(app);
                     tx.send(true);
-                    info!("Message recieved: App quit");
+                    debug!("Message recieved: App quit");
                     return Ok(());
                 },
             } 

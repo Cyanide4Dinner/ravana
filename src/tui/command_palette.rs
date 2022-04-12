@@ -1,5 +1,5 @@
-use anyhow::{ anyhow, Result };
-use log::{ error, info };
+use anyhow::{ anyhow, bail, Result };
+use log::{ debug, error, info };
 use libnotcurses_sys::{
     c_api::{ ncreader, ncreader_destroy, ncreader_offer_input },
     NcChannel,
@@ -14,20 +14,25 @@ use libnotcurses_sys::{
 
 use super::{ TuiPrefs, util::new_child_plane, Widget };
 
+// -----------------------------------------------------------------------------------------------------------
+// Command palette widget.
+// -----------------------------------------------------------------------------------------------------------
 pub struct CmdPalette<'a> {
     pub plane: &'a mut NcPlane,
     reader: &'a mut ncreader
 }
 
 impl<'a> CmdPalette<'a> {
+    // Add input.
     pub fn input(&mut self, ncin: NcInput) -> Result<()> {
         if unsafe { ncreader_offer_input(self.reader, &ncin) } {
             Ok(())
         } else {
-            Err(anyhow!("Unable to input to command palette: {:?}", ncin))
+            bail!("Unable to input to command palette: {:?}", ncin)
         }
     }
 
+    // Validate input.
     pub fn val_input(ncr: &NcReceived) -> bool {
         match ncr {
             NcReceived::Char(_) => true,
@@ -37,8 +42,9 @@ impl<'a> CmdPalette<'a> {
         }
     }
 
+    // Destroy reader nc widget. Required for graceful termination of application.
     pub fn destory_reader(&mut self) {
-        info!("Destroying CmdPalette.");
+        debug!("Destroying CmdPalette.");
         unsafe { ncreader_destroy(self.reader, std::ptr::null::<*mut *mut i8>() as *mut *mut i8) }
     }
 }
@@ -51,6 +57,8 @@ impl<'a> Widget for CmdPalette<'a> {
             dim_x: u32,
             dim_y: u32
           ) -> Result<Self> {
+        debug!("Creating new command palette.");
+
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
         let mut header_bg_channel = NcChannel::new();

@@ -1,13 +1,12 @@
 use anyhow::{ anyhow, Result };
-use log::{ error, info };
+use log::{ debug, error, info };
 use libnotcurses_sys::{ NcPlane, NcRgb };
 
 use crate::jobs::TuiPrefsDes;
 
 // TODO: Add test to check if we're validating all fields and formats.
 pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
-
-    info!("Validing TUI Prefs.");
+    debug!("Validing TUI Prefs.");
 
     // Check color format
     let val_color_fmt = |s: &str| -> bool {
@@ -126,10 +125,12 @@ impl Color {
     }
 }
 
+// Interface preferences.
 pub struct InterfacePrefs {
     pub mouse_events_enable: bool
 }
 
+// Theme.
 pub struct Theme {
     pub highlight_fg: Color,
     pub highlight_bg: Color,
@@ -141,6 +142,7 @@ pub struct Theme {
     pub post_heading_bg: Color
 }
 
+// TUI preferences.
 pub struct TuiPrefs {
     pub interface: InterfacePrefs,
     pub theme: Theme
@@ -148,7 +150,7 @@ pub struct TuiPrefs {
 
 impl TuiPrefs {
     pub fn gen_tui_prefs(tui_prefs_des: &TuiPrefsDes) -> Result<TuiPrefs> {
-        info!("Generating TUI Prefs.");
+        debug!("Generating TUI Prefs.");
         Ok(
             TuiPrefs {
                 interface: InterfacePrefs {

@@ -6,7 +6,7 @@ pub mod config {
 
     // Theme deserialized.
     #[derive(Deserialize, Debug, PartialEq, Eq)]
-    #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
+    #[serde(rename_all(deserialize = "kebab-case"))]
     pub struct ThemeDes {
         pub highlight_fg: String,
         pub highlight_bg: String,
@@ -18,21 +18,22 @@ pub mod config {
         pub post_heading_bg: String
     }
 
-    // Theme deserialized.
+    // Interface deserialized.
     #[derive(Deserialize, Debug, PartialEq, Eq)]
-    #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
+    #[serde(rename_all(deserialize = "kebab-case"))]
     pub struct InterfaceDes {
         pub mouse_events_enable: bool
     }
 
     // TUI Prefs deserialized.
     #[derive(Deserialize, Debug, PartialEq, Eq)]
-    #[serde(rename_all(deserialize = "kebab-case")/*,default*/)]
+    #[serde(rename_all(deserialize = "kebab-case"))]
     pub struct TuiPrefsDes {
         pub interface: InterfaceDes,
         pub theme: ThemeDes
     }
 
+    // Config deserialized.
     #[derive(Deserialize, Debug, PartialEq, Eq)]
     #[serde(rename_all(deserialize = "kebab-case"))]
     pub struct Config {
@@ -45,9 +46,12 @@ pub mod config {
     impl Default for Config {
         fn default() -> Config {
             let mut default_key_bindings: HashMap<String, String> = HashMap::new();
+
+            // Load default key bindings specified in /input.
             for (&key, &value) in DEFAULT_KEY_BINDINGS.entries() {
                 default_key_bindings.insert(key.to_owned(), value.to_owned());
             }
+
             Config {
                 key_bindings: default_key_bindings,
                 tui: TuiPrefsDes {
