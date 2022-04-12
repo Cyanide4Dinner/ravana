@@ -6,7 +6,6 @@ use crate::jobs::TuiPrefsDes;
 
 // TODO: Add test to check if we're validating all fields and formats.
 pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
-
     debug!("Validing TUI Prefs.");
 
     // Check color format
@@ -126,10 +125,12 @@ impl Color {
     }
 }
 
+// Interface preferences.
 pub struct InterfacePrefs {
     pub mouse_events_enable: bool
 }
 
+// Theme.
 pub struct Theme {
     pub highlight_fg: Color,
     pub highlight_bg: Color,
@@ -141,6 +142,7 @@ pub struct Theme {
     pub post_heading_bg: Color
 }
 
+// TUI preferences.
 pub struct TuiPrefs {
     pub interface: InterfacePrefs,
     pub theme: Theme

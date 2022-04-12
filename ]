@@ -228,9 +228,7 @@ pub mod key_bindings {
         let mut key_comb: Vec<Key> = Vec::new();
         let find_key = |s: &str| -> Result<Key> {
                 if let Some(key) = STRING_TO_KEYS.get(s) { Ok(key.clone()) } 
-                else { 
-                    bail!(format!("Cannot find any key corresponding to {}", s))
-                } 
+                else { Err(anyhow!(format!("Cannot find any key corresponding to {}", s))) } 
         };
         let mut is_special_key: bool = false;
         let mut special_key_index = 0;
@@ -238,20 +236,20 @@ pub mod key_bindings {
             match c {
                 '<' => { 
                     if is_special_key { 
-                       bail!("Invalid key-binding format {}, < wrongly placed", key_comb_str)
+                        return bail!("Invalid key-binding format {}, < wrongly placed", key_comb_str)
                     }
                     is_special_key = true; special_key_index = i+1; 
                 },
                 '-' => {
                     if !is_special_key { 
-                        bail!("Invalid key-binding format {}, < wrongly placed", key_comb_str)
+                        return Err(anyhow!("Invalid key-binding format {}, - wrongly placed", key_comb_str));
                     }
                     key_comb.push(find_key(&key_comb_str[special_key_index..i])?);
                     special_key_index = i+1;
                 },
                 '>' => {
                     if !is_special_key { 
-                        bail!("Invalid key-binding format {}, < wrongly placed", key_comb_str)
+                        return Err(anyhow!("Invalid key-binding format {}, > wrongly placed", key_comb_str));
                     }
                     key_comb.push(find_key(&key_comb_str[special_key_index..i])?);
                     is_special_key = false; 
@@ -262,9 +260,7 @@ pub mod key_bindings {
                 }
             }
         }
-        if is_special_key { 
-            bail!("Invalid key-binding format {}, < wrongly placed", key_comb_str)
-        }
+        if is_special_key { return Err(anyhow!("Invalid key-binding format {}", key_comb_str)); }
         Ok(key_comb)
     }
 }

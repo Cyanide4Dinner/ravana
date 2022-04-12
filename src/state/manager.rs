@@ -18,7 +18,9 @@ pub async fn init(
         nc: Arc<Mutex<&mut Nc>>, 
         tui_prefs_des: TuiPrefsDes,
         mpsc_recv: Receiver<Message>) -> Result<()> {
+    // TODO: Remove sleep.
     thread::sleep(time::Duration::new(5,0));
+
     manage(nc, tui_prefs_des, mpsc_recv).await?;
     Ok(())
 }
@@ -32,6 +34,7 @@ pub async fn manage(
         nc: Arc<Mutex<&mut Nc>>,
         tui_prefs_des: TuiPrefsDes,
         mut mpsc_recv: Receiver<Message>) -> Result<()> {
+    debug!("Starting manager listener loop.");
     let mut app: App = init_tui(nc.clone(), &tui_prefs_des)?;
     loop {
         if let Some(ms) = mpsc_recv.recv().await {

@@ -1,4 +1,4 @@
-use anyhow::{ anyhow, Result };
+use anyhow::{ anyhow, bail, Result };
 use log::{ debug, error, info };
 use libnotcurses_sys::{
     c_api::{ ncreader, ncreader_destroy, ncreader_offer_input },
@@ -28,7 +28,7 @@ impl<'a> CmdPalette<'a> {
         if unsafe { ncreader_offer_input(self.reader, &ncin) } {
             Ok(())
         } else {
-            Err(anyhow!("Unable to input to command palette: {:?}", ncin))
+            bail!("Unable to input to command palette: {:?}", ncin)
         }
     }
 
@@ -57,6 +57,8 @@ impl<'a> Widget for CmdPalette<'a> {
             dim_x: u32,
             dim_y: u32
           ) -> Result<Self> {
+        debug!("Creating new command palette.");
+
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
         let mut header_bg_channel = NcChannel::new();

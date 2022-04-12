@@ -9,6 +9,7 @@ mod events;
 pub mod jobs;
 pub mod input;
 pub mod state;
+pub mod tools;
 
 #[tokio::main]
 async fn main(){

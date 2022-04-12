@@ -1,4 +1,4 @@
-use anyhow::{ anyhow, Context, Result };
+use anyhow::{ anyhow, bail, Context, Result };
 use libnotcurses_sys::{
     Nc,
     NcInput,
@@ -9,7 +9,7 @@ use libnotcurses_sys::{
 use log::{ debug, error, info };
 use std::sync::{ Arc, Mutex };
 
-use crate::tui::TuiPrefs;
+use crate::{ tools::{ handle_err, log_err }, tui::TuiPrefs };
 use super::subreddit_listing_page::SubListPage;
 use super::{CmdPalette,
                 page::{ Page, PageType },
@@ -42,19 +42,25 @@ impl<'a> App<'a> {
         let stdplane = unsafe { nc_lock.stdplane() }; 
         let (dim_y, dim_x) = nc_lock.term_dim_yx();
 
-        if tui_prefs.interface.mouse_events_enable { nc_lock.mice_enable(NcMiceEvents::All)?; }
+        if tui_prefs.interface.mouse_events_enable { 
+            info!("Enabling mice events.");
+            handle_err!(nc_lock.mice_enable(NcMiceEvents::All), "Failed to enable mice events")?;
+        }
 
         drop(nc_lock);
 
         let app_plane = new_child_plane!(stdplane, 0, 0, dim_x, dim_y);
 
-        let cmd_plt = CmdPalette::new(&tui_prefs,
-                                      app_plane,
-                                      0,
-                                      (stdplane.dim_y() - 1) as i32,
-                                      stdplane.dim_x(),
-                                      1
-                                      )?;
+        debug!("Creating command palette.");
+        let cmd_plt = log_err!(
+            CmdPalette::new(&tui_prefs,
+                              app_plane,
+                              0,
+                              (stdplane.dim_y() - 1) as i32,
+                              stdplane.dim_x(),
+                              1
+                              )
+        )?;
 
         Ok(
             App {
@@ -70,15 +76,18 @@ impl<'a> App<'a> {
 
     // Add a new page.
     pub fn add_page(&mut self, page_type: PageType) -> Result<()> {
+        info!("Adding new page of type {:?}.", page_type);
         match page_type {
             PageType::SubredditListing => {
-                let mut sub_list_page = SubListPage::new(&self.tui_prefs,
+                let mut sub_list_page = log_err!(SubListPage::new(&self.tui_prefs,
                                                             self.plane,
                                                             0,
                                                             0,
                                                             self.plane.dim_x(),
                                                             self.plane.dim_y()
-                                                            )?;
+                                                            ))?;
+
+                // DEV
                 sub_list_page.add_post(&self.tui_prefs, SubListPostData {
                     heading: "hadfafda",
                     content: "fahfaljdf",
@@ -86,34 +95,35 @@ impl<'a> App<'a> {
                     username: "afhaldjf",
                     subreddit_name: "rust",
                     comments: 78
-                })?;
+                }).context("Failed to create new page of type SubredditListing.")?;
                 self.pages.push(Box::new(sub_list_page));
+
+                // DEV
+                // TODO: Find ways to move cmd_plt to top automatically.
                 self.cmd_plt.plane.move_top();
             }
         }
-
         Ok(())
     }
 
     // TODO: Find better ways of ordering planes as layers in App.
     pub fn input_cmd_plt(&mut self, ncin: NcInput) -> Result<()> {
-        self.cmd_plt.input(ncin)?;
+        log_err!(self.cmd_plt.input(ncin))?;
         self.render()
     }
 
     // Render TUI.
     pub fn render(&mut self) -> Result<()> {
         for page in self.pages.iter_mut() {
-            page.draw(&self.tui_prefs)?;
+            handle_err!(page.draw(&self.tui_prefs), "Failed to render page")?;
         }
 
         if let Ok(mut nc_lock) = self.nc.lock() {
-            nc_lock.render().context("Nc render failed.")?;
-            // info!("Rendered app.");
+            handle_err!(nc_lock.render(), "Failed to render app")?;
             return Ok(())
         }
         error!("Failed to render app: unable to lock Nc.");
-        Err(anyhow!("Failed to render app: unable to lock Nc."))
+        bail!("Failed to render app: unable to lock Nc.")
     }
 }
 
@@ -124,22 +134,16 @@ impl<'a> App<'a> {
 // -----------------------------------------------------------------------------------------------------------
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
-        // for page in self.pages.iter_mut() {
-        //     drop(page);
-        // }
         debug!("Dropping App.");
 
         // Destroy ncreader before destroying base plane or Nc instance.
         self.cmd_plt.destory_reader();
 
-        if let Err(err) = self.plane.destroy() {
-            error!("Error dropping App plane: {}", err);
-        }
+        handle_err!(self.plane.destroy(), "Failed to destroy app plane").unwrap();
+
         if let Ok(mut nc_lock) = self.nc.lock() {
             unsafe { 
-                if let Err(err) = nc_lock.stop() {
-                    error!("Error destroying Nc instance while dropping App: {}", err);
-                } 
+                handle_err!(nc_lock.stop(), "Failed to destroy Nc instance").unwrap()
             }
         } else { error!("Error locking Nc instance while dropping App."); }
     }

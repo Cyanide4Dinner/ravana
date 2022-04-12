@@ -2,6 +2,7 @@ use anyhow::Result;
 
 use super::TuiPrefs;
 
+#[derive(Debug)]
 pub enum PageType {
     SubredditListing
 }

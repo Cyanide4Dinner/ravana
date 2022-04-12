@@ -6,8 +6,9 @@ use libnotcurses_sys::{
     NcPlaneOptions,
     c_api
 };
-use log::error;
+use log::{ debug, error };
 
+use crate::tools::{ handle_err, log_err };
 use super::{  page::Page, TuiPrefs, Widget, util::new_child_plane };
 
 // Data to display in a post item of subreddit listing.
@@ -28,6 +29,7 @@ pub struct SubListPost<'a> {
 
 impl<'a> SubListPost<'a> {
     fn draw_header(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
+        // Header channels
         let header_bg_channel = NcChannel::from_rgb(tui_prefs.theme.post_header_bg.to_nc_rgb());
         let header_fg_channel = NcChannel::from_rgb(tui_prefs.theme.post_header_fg.to_nc_rgb());
 
@@ -122,6 +124,7 @@ impl<'a> Widget for SubListPost<'a> {
                     dim_x: u32,
                     dim_y: u32
                    ) -> Result<Self> {
+        debug!("Creating new post.");
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
         Ok(Self {
@@ -138,8 +141,9 @@ impl<'a> Widget for SubListPost<'a> {
     }
 
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
-        self.draw_header(tui_prefs)?;
-        self.draw_heading(tui_prefs)
+        debug!("Drawing post.");
+        handle_err!(self.draw_header(tui_prefs), "Failed to draw header")?;
+        handle_err!(self.draw_heading(tui_prefs), "Failed to draw heading")
     }
 }
 
@@ -153,6 +157,7 @@ pub struct SubListPage<'a> {
 
 impl<'a> SubListPage<'a> {
     pub fn add_post(&mut self, tui_prefs: &TuiPrefs, data: SubListPostData<'a>) -> Result<()> {
+        debug!("Adding post to SubListPage.");
         self.posts.push(SubListPost::new(
                 tui_prefs,
                 self.plane,
@@ -173,6 +178,7 @@ impl<'a> Widget for SubListPage<'a> {
                    dim_x: u32,
                    dim_y: u32
                    ) -> Result<Self> {
+        debug!("Creating new SubListPage page.");
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
         plane.set_fchannel(NcChannel::from_rgb(tui_prefs.theme.highlight_fg.to_nc_rgb()));
@@ -191,8 +197,9 @@ impl<'a> Widget for SubListPage<'a> {
 
 impl Page for SubListPage<'_> {
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
+        debug!("Draw SubListPage page.");
         for post in self.posts.iter_mut() {
-            post.draw(tui_prefs).context("Failed to render post.")?;
+            post.draw(tui_prefs)?;
         }
         Ok(())
     }
