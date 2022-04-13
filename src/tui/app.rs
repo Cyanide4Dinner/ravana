@@ -137,7 +137,7 @@ impl<'a> Drop for App<'a> {
         debug!("Dropping App.");
 
         // Destroy ncreader before destroying base plane or Nc instance.
-        self.cmd_plt.destory_reader();
+        self.cmd_plt.destroy_reader();
 
         handle_err!(self.plane.destroy(), "Failed to destroy app plane").unwrap();
 

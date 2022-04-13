@@ -16,6 +16,7 @@ use tokio::sync::mpsc::Sender;
 use crate::events::app_events::init_tui;
 use crate::tui::CmdPalette;
 use crate::state::Message;
+use super::command_to_event::exec_cmd;
 use super::util::key_bindings::{ 
     create_key_bindings_trie,
     Key,
@@ -94,12 +95,12 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, mpsc_send: Sender
                             // TODO: Find efficient way of detecting AppQuit, currently for this one detection
                             // all trait objects of UserEvent are made to have get_name()
                             if let Some(ue) = kbt.get(&buffer) {
-                                ue.trigger(mpsc_send.clone()).await?;
+                                exec_cmd(mpsc_send.clone(), ue).await;
 
                                 // If AppQuit, leave.
-                                if ue.get_name().eq("AppQuit") {
+                                if ue.eq("app_quit") {
                                     break;
-                                }
+                                } 
                                 buffer.clear();
                             }
                         }

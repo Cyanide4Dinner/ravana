@@ -1,7 +1,7 @@
 use anyhow::{ anyhow, bail, Result };
 use log::{ debug, error, info };
 use libnotcurses_sys::{
-    c_api::{ ncreader, ncreader_destroy, ncreader_offer_input },
+    c_api::{ ncreader, ncreader_contents, ncreader_destroy, ncreader_offer_input },
     NcChannel,
     NcChannels,
     NcInput,
@@ -42,11 +42,16 @@ impl<'a> CmdPalette<'a> {
         }
     }
 
+    // Get contents of command palette.
+    // pub fn contents(&mut self) -> Result<String> {
+    // }
+
     // Destroy reader nc widget. Required for graceful termination of application.
-    pub fn destory_reader(&mut self) {
+    pub fn destroy_reader(&mut self) {
         debug!("Destroying CmdPalette.");
         unsafe { ncreader_destroy(self.reader, std::ptr::null::<*mut *mut i8>() as *mut *mut i8) }
     }
+
 }
 
 impl<'a> Widget for CmdPalette<'a> {

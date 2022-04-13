@@ -29,3 +29,16 @@ impl UserEvent for AppQuit {
         }
     }
 }
+
+pub async fn e_app_quit(mpsc_send: Sender<Message>) -> Result<()> {
+        debug!("AppQuit triggered.");
+        let (tx, rx) = oneshot::channel::<bool>();
+        if let Err(err) = mpsc_send.send(Message::AppQuit(tx)).await { 
+            error!("Error sending message AppQuit: {}", err);
+        }
+        if let Ok(true) = rx.await {
+            Ok(())
+        } else {
+            Err(anyhow!("AppQuit ACK not received."))
+        }
+}

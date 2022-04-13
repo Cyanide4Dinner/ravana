@@ -207,17 +207,17 @@ pub mod key_bindings {
     pub type KeyCombination = Vec<Key>;
 
     //TODO: Add support for leader key.
-    pub type KeyBindingsTrie = SequenceTrie<Key, Box<dyn UserEvent>>;
+    pub type KeyBindingsTrie = SequenceTrie<Key, String>;
 
     pub fn create_key_bindings_trie(kb: &HashMap<String, String>) -> Result<KeyBindingsTrie> {
         debug!("Creating key-bindings trie.");
         let mut kb_trie: KeyBindingsTrie = KeyBindingsTrie::new();
         for (&key, &def_val) in DEFAULT_KEY_BINDINGS.entries() {
             if let Some(val) = kb.get(key) {
-                kb_trie.insert_owned(parse_to_key_combination(val)?, get_user_event(key)?);
+                kb_trie.insert_owned(parse_to_key_combination(val)?, key.to_string());
             }  
             else {
-                kb_trie.insert_owned(parse_to_key_combination(def_val)?, get_user_event(key)?);
+                kb_trie.insert_owned(parse_to_key_combination(def_val)?, key.to_string());
             }
         }
         Ok(kb_trie)
