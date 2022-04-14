@@ -9,8 +9,16 @@ use libnotcurses_sys::{
 use log::{ debug, error, info };
 use std::sync::{ Arc, Mutex };
 use tokio::sync::oneshot;
+use tokio::sync::mpsc::Sender;
 
-use crate::{ input::input_message::InputMessage, tools::{ handle_err, log_err }, tui::TuiPrefs };
+use crate::{ 
+        input::{
+            input_message::InputMessage,
+            command_to_event
+        },
+        state::Message,
+        tools::{ handle_err, log_err }, tui::TuiPrefs 
+};
 use super::subreddit_listing_page::SubListPage;
 use super::{CmdPalette,
                 page::{ Page, PageType },
@@ -29,6 +37,9 @@ pub struct App<'a> {
         nc: Arc<Mutex<&'a mut Nc>>,
         plane: &'a mut NcPlane,
         tui_prefs: TuiPrefs,
+
+        // For sending messages to trigger events.
+        mpsc_send: Option<Sender<Message>>,
 
         // Pages currently in the application.
         pub pages: Vec<Box<dyn Page + 'a>>,
@@ -68,6 +79,9 @@ impl<'a> App<'a> {
                 nc,
                 plane: app_plane,
                 tui_prefs,
+
+                mpsc_send: None,
+
                 pages: Vec::new(),
 
                 cmd_plt
@@ -108,9 +122,15 @@ impl<'a> App<'a> {
     }
 
     // TODO: Find better ways of ordering planes as layers in App.
-    pub fn input_cmd_plt(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
-        log_err!(self.cmd_plt.input(ncin, oneshot_tx))?;
+    pub async fn input_cmd_plt(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
+        let cmd = log_err!(self.cmd_plt.input(ncin, oneshot_tx))?;
+        // command_to_event::exec_cmd(None, cmd).await;
         self.render()
+    }
+
+    pub fn exec_cmd(&mut self) -> Result<()> {
+        debug!("Executing command: {:?}", self.cmd_plt.contents()?);
+        Ok(())
     }
 
     // Render TUI.

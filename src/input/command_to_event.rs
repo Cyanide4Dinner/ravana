@@ -25,13 +25,19 @@ macro_rules! exec_err_handle {
 // * Parse a command.
 // * Trigger corresponding events.
 // -----------------------------------------------------------------------------------------------------------
-pub async fn exec_cmd(mpsc_send: Sender<Message>, oneshot_send: oneshot::Sender<InputMessage>, cmd: &str) {
+pub async fn exec_cmd(mpsc_send: Sender<Message>,
+                      opt_os_send: Option<oneshot::Sender<InputMessage>>,
+                      cmd: &str) {
     debug!("Executing command {}", cmd);
     let args: Vec<&str> = cmd.split(" ").collect();
 
     match args[0] {
         APP_QUIT => { 
-            exec_err_handle!(e_app_quit(mpsc_send, oneshot_send).await, APP_QUIT);
+            if let Some(os_send) = opt_os_send {
+                exec_err_handle!(e_app_quit(mpsc_send, os_send).await, APP_QUIT);
+            } else {
+                error!("Oneshot sender needed, provided None.");
+            }
         },
         _ => { 
 

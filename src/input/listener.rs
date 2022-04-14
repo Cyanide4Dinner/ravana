@@ -75,34 +75,56 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>,
             let recorded_input = nc_lock.get_nblock(Some(&mut input_details))?;
             drop(nc_lock);
 
-            if cmd_input { // COMMAND INPUT MODE - true.
-                if let NcReceived::Event(NcKey::Esc) = recorded_input {
-                    // Switch out of COMMAND INPUT MODE.
-                    debug!("COMMAND INPUT MODE - OFF");
-                    cmd_input = false;
-                    continue;
-                } else {
-                    if CmdPalette::val_input(&recorded_input) { // Validate if input recieved is compatible.
-                        if let Err(e) = mpsc_send.send(Message::CmdInput(input_details.clone(), oneshot_tx))
-                            .await {
-                                error!("Error sending CmdInput mpsc_send message: {}", e);
-                            };
+            // -----------------------------------------------------------------------------------------------
+            // COMMAND INPUT MODE - true
+            // -----------------------------------------------------------------------------------------------
+            if cmd_input {
+                match recorded_input {
+                    // Execute command.
+                    NcReceived::Event(NcKey::Enter) => {
+                        debug!("Preparing to execute command.");
+                        cmd_input = false;
+                        if let Err(e) = mpsc_send.send(Message::CmdExec).await {
+                            error!("Error sending CmdExec mpsc_send message: {}", e);
+                        };
+                    },
 
-                        if let Ok(input_msg) = oneshot_rx.await {
-                            match input_msg {
-                                InputMessage::ContinueCmdMode => { continue; },
-                                InputMessage::EndCmdMode => { cmd_input = false; continue; },
-                                _ => { 
-                                    error!("Wrong message received by listener in CmdMode: {:?}", input_msg); 
-                                    cmd_input = false;
-                                }
-                            }
-                        } else {
-                            error!("Error receiving from oneshot channel in listener.");
+                    // Escape command mode.
+                    NcReceived::Event(NcKey::Esc) => {
+                        debug!("Escaping command mode.");
+                        cmd_input = false;
+                    },
+
+                    _ => {
+                        // Validate if input recieved is compatible.
+                        if CmdPalette::val_input(&recorded_input) { 
+                            if let Err(e) = mpsc_send.send(Message::CmdInput(input_details.clone(),
+                                                    oneshot_tx)).await {
+                                    error!("Error sending CmdInput mpsc_send message: {}", e);
+                                };
+
                         }
                     }
                 }
-            } else { // COMMAND INPUT MODE - false
+
+                // Wait for confirmation before continuing.
+                if let Ok(input_msg) = oneshot_rx.await {
+                    match input_msg {
+                        InputMessage::ContinueCmdMode => { continue; },
+                        InputMessage::EndCmdMode => { cmd_input = false; continue; },
+                        _ => { 
+                            error!("Wrong message received by listener in CmdMode: {:?}", input_msg); 
+                            cmd_input = false;
+                        }
+                    }
+                } else {
+                    error!("Error receiving from oneshot channel in listener.");
+                }
+            } 
+            // -----------------------------------------------------------------------------------------------
+            // COMMAND INPUT MODE - false
+            // -----------------------------------------------------------------------------------------------
+            else { // COMMAND INPUT MODE - false
                 if let NcReceived::Char(':') = recorded_input {
                     // Switch to COMMAND INPUT MODE.
                     debug!("COMMAND INPUT MODE - ON");

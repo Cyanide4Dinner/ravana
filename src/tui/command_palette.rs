@@ -12,6 +12,7 @@ use libnotcurses_sys::{
     widgets::NcReaderOptions
 };
 use tokio::sync::oneshot;
+use std::ffi::CStr;
 
 use super::{ TuiPrefs, util::new_child_plane, Widget };
 use crate::input::input_message::InputMessage;
@@ -43,13 +44,15 @@ impl<'a> CmdPalette<'a> {
             NcReceived::Char(_) => true,
             NcReceived::Event(NcKey::Left) => true,
             NcReceived::Event(NcKey::Right) => true,
+            NcReceived::Event(NcKey::Enter) => true,
             _ => false
         }
     }
 
     // Get contents of command palette.
-    // pub fn contents(&mut self) -> Result<String> {
-    // }
+    pub fn contents(&mut self) -> Result<String> {
+        Ok((unsafe { CStr::from_ptr(ncreader_contents(self.reader)) }).to_str()?.to_string())
+    }
 
     // Destroy reader nc widget. Required for graceful termination of application.
     pub fn destroy_reader(&mut self) {

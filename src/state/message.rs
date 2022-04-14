@@ -13,6 +13,12 @@ pub enum Message {
     // Quit app. Send ACK.
     AppQuit(Sender<InputMessage>),
 
+    // Clear command palette
+    CmdClear,
+
+    // Execute command
+    CmdExec,
+
     // New input for command palette widget.
     CmdInput(NcInput, Sender<InputMessage>)
 }

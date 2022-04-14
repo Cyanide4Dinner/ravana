@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{ Context, Result };
 use log::{ debug, error, warn };
 use libnotcurses_sys::{
     Nc
@@ -43,18 +43,21 @@ pub async fn manage(
     loop {
         if let Some(ms) = mpsc_recv.recv().await {
             match ms {
+                Message::CmdExec => {
+                    debug!("Message received: CmdExec");
+                    handle_err!(app.exec_cmd(), "Failed to exec CmdExec");
+                },
                 Message::CmdInput(ncin, oneshot_tx) => {
-                    // info!("CMD input!");
-                    app.input_cmd_plt(ncin, oneshot_tx)?;
+                    handle_err!(app.input_cmd_plt(ncin, oneshot_tx), "Failed to exec CmdInput");
                 },
                 Message::InitTUI => {
-                    debug!("Message recieved: TUI init");
+                    debug!("Message received: TUI init");
                     // app = init_tui(nc.clone(), &tui_prefs_des)?;
                 },
                 Message::AppQuit(tx) => {
                     drop(app);
                     tx.send(InputMessage::AppQuit).unwrap(); // TODO: Resolve unwrap to better handling.
-                    debug!("Message recieved: App quit");
+                    debug!("Message received: App quit");
                     return Ok(());
                 },
             } 
