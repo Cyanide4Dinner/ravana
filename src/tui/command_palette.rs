@@ -11,8 +11,10 @@ use libnotcurses_sys::{
     NcReceived,
     widgets::NcReaderOptions
 };
+use tokio::sync::oneshot;
 
 use super::{ TuiPrefs, util::new_child_plane, Widget };
+use crate::input::input_message::InputMessage;
 
 // -----------------------------------------------------------------------------------------------------------
 // Command palette widget.
@@ -24,8 +26,11 @@ pub struct CmdPalette<'a> {
 
 impl<'a> CmdPalette<'a> {
     // Add input.
-    pub fn input(&mut self, ncin: NcInput) -> Result<()> {
+    pub fn input(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
         if unsafe { ncreader_offer_input(self.reader, &ncin) } {
+            if let Err(e) = oneshot_tx.send(InputMessage::ContinueCmdMode) {
+                error!("Error sending oneshot_tx: {:?}", e);
+            };
             Ok(())
         } else {
             bail!("Unable to input to command palette: {:?}", ncin)

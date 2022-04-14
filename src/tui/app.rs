@@ -8,8 +8,9 @@ use libnotcurses_sys::{
 };
 use log::{ debug, error, info };
 use std::sync::{ Arc, Mutex };
+use tokio::sync::oneshot;
 
-use crate::{ tools::{ handle_err, log_err }, tui::TuiPrefs };
+use crate::{ input::input_message::InputMessage, tools::{ handle_err, log_err }, tui::TuiPrefs };
 use super::subreddit_listing_page::SubListPage;
 use super::{CmdPalette,
                 page::{ Page, PageType },
@@ -107,8 +108,8 @@ impl<'a> App<'a> {
     }
 
     // TODO: Find better ways of ordering planes as layers in App.
-    pub fn input_cmd_plt(&mut self, ncin: NcInput) -> Result<()> {
-        log_err!(self.cmd_plt.input(ncin))?;
+    pub fn input_cmd_plt(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
+        log_err!(self.cmd_plt.input(ncin, oneshot_tx))?;
         self.render()
     }
 

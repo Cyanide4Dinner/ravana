@@ -1,5 +1,6 @@
 use libnotcurses_sys::NcInput;
 use tokio::sync::oneshot::Sender;
+use crate::input::input_message::InputMessage;
 
 // -----------------------------------------------------------------------------------------------------------
 // Message structs used to communicate to manager by events.
@@ -10,8 +11,8 @@ pub enum Message {
     InitTUI,
 
     // Quit app. Send ACK.
-    AppQuit(Sender<bool>),
+    AppQuit(Sender<InputMessage>),
 
     // New input for command palette widget.
-    CmdInput(NcInput)
+    CmdInput(NcInput, Sender<InputMessage>)
 }

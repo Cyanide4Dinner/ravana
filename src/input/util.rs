@@ -7,8 +7,6 @@ pub mod key_bindings {
     use sequence_trie::SequenceTrie;
     use std::collections::HashMap;
 
-    use crate::events::{get_user_event, UserEvent};
-    
     // Supported keys.
     #[cfg_attr(test, derive(IntoEnumIterator))]
     #[derive(Clone, Debug, Eq, Hash, PartialEq)]
