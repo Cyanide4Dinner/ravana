@@ -87,6 +87,7 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>,
                         if let Err(e) = mpsc_send.send(Message::CmdExec).await {
                             error!("Error sending CmdExec mpsc_send message: {}", e);
                         };
+                        continue;
                     },
 
                     // Escape command mode.

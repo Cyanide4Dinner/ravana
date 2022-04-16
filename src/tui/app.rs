@@ -127,7 +127,7 @@ impl<'a> App<'a> {
 
     // TODO: Find better ways of ordering planes as layers in App.
     pub async fn input_cmd_plt(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
-        let cmd = log_err!(self.cmd_plt.input(ncin, oneshot_tx).await)?;
+        log_err!(self.cmd_plt.input(ncin, oneshot_tx).await)?;
         // command_to_event::exec_cmd(None, cmd).await;
         self.render()
     }
@@ -145,8 +145,10 @@ impl<'a> App<'a> {
         self.render()
     }
 
-    pub fn exec_cmd(&mut self) -> Result<()> {
+    pub async fn exec_cmd(&mut self) -> Result<()> {
         debug!("Executing command: {:?}", self.cmd_plt.contents()?);
+        let mut cmd = self.cmd_plt.contents()?;
+        command_to_event::exec_cmd(self.mpsc_send.clone(), None, &cmd.split_off(1)).await;
         Ok(())
     }
 

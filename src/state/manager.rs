@@ -53,7 +53,7 @@ pub async fn manage(
                 },
                 Message::CmdExec => {
                     debug!("Message received: CmdExec");
-                    handle_err!(app.exec_cmd(), "Failed to exec CmdExec");
+                    handle_err!(app.exec_cmd().await, "Failed to exec CmdExec");
                 },
                 Message::CmdInput(ncin, oneshot_tx) => {
                     handle_err!(app.input_cmd_plt(ncin, oneshot_tx).await, "Failed to exec CmdInput");
