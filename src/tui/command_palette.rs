@@ -34,8 +34,11 @@ impl<'a> CmdPalette<'a> {
     pub async fn input(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
         if unsafe { ncreader_offer_input(self.reader, &ncin) } {
             if let Ok(s) = self.contents() {
-                if s == "" {
-                    self.mpsc_send.send(Message::CmdExit).await;
+                if s.len() == 1 && (0, 0) == self.plane.cursor_yx() {
+                    self.mpsc_send.send(Message::CmdExit).await?;
+                    if let Err(e) = oneshot_tx.send(InputMessage::EndCmdMode) {
+                        error!("Error sending oneshot_tx: {:?}", e);
+                    };
                     return Ok(())
                 }    
             } 
