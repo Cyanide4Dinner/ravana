@@ -1,5 +1,6 @@
 use anyhow::{ anyhow, bail, Context, Result };
 use libnotcurses_sys::{
+    c_api::ncreader_offer_input,
     Nc,
     NcInput,
     NcMiceEvents,
@@ -39,7 +40,7 @@ pub struct App<'a> {
         tui_prefs: TuiPrefs,
 
         // For sending messages to trigger events.
-        mpsc_send: Option<Sender<Message>>,
+        mpsc_send: Sender<Message>,
 
         // Pages currently in the application.
         pub pages: Vec<Box<dyn Page + 'a>>,
@@ -49,7 +50,8 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs) -> Result<App<'b>> {
+    pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs, mpsc_send: Sender<Message>) 
+            -> Result<App<'b>> {
         let mut nc_lock = nc.lock().unwrap();
         let stdplane = unsafe { nc_lock.stdplane() }; 
         let (dim_y, dim_x) = nc_lock.term_dim_yx();
@@ -70,7 +72,8 @@ impl<'a> App<'a> {
                               0,
                               (stdplane.dim_y() - 1) as i32,
                               stdplane.dim_x(),
-                              1
+                              1,
+                              mpsc_send.clone()
                               )
         )?;
 
@@ -80,7 +83,7 @@ impl<'a> App<'a> {
                 plane: app_plane,
                 tui_prefs,
 
-                mpsc_send: None,
+                mpsc_send,
 
                 pages: Vec::new(),
 
@@ -99,7 +102,8 @@ impl<'a> App<'a> {
                                                             0,
                                                             0,
                                                             self.plane.dim_x(),
-                                                            self.plane.dim_y()
+                                                            self.plane.dim_y(),
+                                                            self.mpsc_send.clone()
                                                             ))?;
 
                 // DEV
@@ -123,8 +127,21 @@ impl<'a> App<'a> {
 
     // TODO: Find better ways of ordering planes as layers in App.
     pub async fn input_cmd_plt(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
-        let cmd = log_err!(self.cmd_plt.input(ncin, oneshot_tx))?;
+        let cmd = log_err!(self.cmd_plt.input(ncin, oneshot_tx).await)?;
         // command_to_event::exec_cmd(None, cmd).await;
+        self.render()
+    }
+
+    pub fn enter_cmd(&mut self) -> Result<()> {
+        debug!("Entering CmdMode.");
+        // Put : in CmdPalette
+        unsafe { ncreader_offer_input(self.cmd_plt.reader, &NcInput::new(':')) };
+        self.render()
+    }
+
+    pub fn exit_cmd(&mut self) -> Result<()> {
+        debug!("Exiting CmdMode.");
+        self.cmd_plt.clear_contents();
         self.render()
     }
 

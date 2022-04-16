@@ -1,5 +1,5 @@
 use libnotcurses_sys::NcInput;
-use tokio::sync::oneshot::Sender;
+use tokio::sync::{ oneshot::Sender as OneshotSender, mpsc::Sender as MpscSender };
 use crate::input::input_message::InputMessage;
 
 // -----------------------------------------------------------------------------------------------------------
@@ -11,14 +11,17 @@ pub enum Message {
     InitTUI,
 
     // Quit app. Send ACK.
-    AppQuit(Sender<InputMessage>),
+    AppQuit(OneshotSender<InputMessage>),
 
-    // Clear command palette
-    CmdClear,
+    // Enter Cmd Mode
+    CmdEnter,
+
+    // Exit Cmd Mode
+    CmdExit,
 
     // Execute command
     CmdExec,
 
     // New input for command palette widget.
-    CmdInput(NcInput, Sender<InputMessage>)
+    CmdInput(NcInput, OneshotSender<InputMessage>),
 }

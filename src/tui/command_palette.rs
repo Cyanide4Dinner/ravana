@@ -1,7 +1,7 @@
 use anyhow::{ anyhow, bail, Result };
 use log::{ debug, error, info };
 use libnotcurses_sys::{
-    c_api::{ ncreader, ncreader_contents, ncreader_destroy, ncreader_offer_input },
+    c_api::{ ncreader, ncreader_contents, ncreader_clear, ncreader_destroy, ncreader_offer_input },
     NcChannel,
     NcChannels,
     NcInput,
@@ -12,23 +12,33 @@ use libnotcurses_sys::{
     widgets::NcReaderOptions
 };
 use tokio::sync::oneshot;
+use tokio::sync::mpsc::Sender;
 use std::ffi::CStr;
 
 use super::{ TuiPrefs, util::new_child_plane, Widget };
 use crate::input::input_message::InputMessage;
+use crate::state::Message;
 
 // -----------------------------------------------------------------------------------------------------------
 // Command palette widget.
 // -----------------------------------------------------------------------------------------------------------
 pub struct CmdPalette<'a> {
     pub plane: &'a mut NcPlane,
-    reader: &'a mut ncreader
+    pub reader: &'a mut ncreader,
+
+    mpsc_send: Sender<Message>
 }
 
 impl<'a> CmdPalette<'a> {
     // Add input.
-    pub fn input(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
+    pub async fn input(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
         if unsafe { ncreader_offer_input(self.reader, &ncin) } {
+            if let Ok(s) = self.contents() {
+                if s == "" {
+                    self.mpsc_send.send(Message::CmdExit).await;
+                    return Ok(())
+                }    
+            } 
             if let Err(e) = oneshot_tx.send(InputMessage::ContinueCmdMode) {
                 error!("Error sending oneshot_tx: {:?}", e);
             };
@@ -45,6 +55,7 @@ impl<'a> CmdPalette<'a> {
             NcReceived::Event(NcKey::Left) => true,
             NcReceived::Event(NcKey::Right) => true,
             NcReceived::Event(NcKey::Enter) => true,
+            NcReceived::Event(NcKey::Backspace) => true,
             _ => false
         }
     }
@@ -52,6 +63,10 @@ impl<'a> CmdPalette<'a> {
     // Get contents of command palette.
     pub fn contents(&mut self) -> Result<String> {
         Ok((unsafe { CStr::from_ptr(ncreader_contents(self.reader)) }).to_str()?.to_string())
+    }
+
+    pub fn clear_contents(&mut self) {
+        unsafe { ncreader_clear(self.reader) };
     }
 
     // Destroy reader nc widget. Required for graceful termination of application.
@@ -68,7 +83,8 @@ impl<'a> Widget for CmdPalette<'a> {
             x: i32,
             y: i32,
             dim_x: u32,
-            dim_y: u32
+            dim_y: u32,
+            mpsc_send: Sender<Message>
           ) -> Result<Self> {
         debug!("Creating new command palette.");
 
@@ -97,7 +113,8 @@ impl<'a> Widget for CmdPalette<'a> {
 
         Ok(Self {
             plane,
-            reader
+            reader,
+            mpsc_send
         })
     }
 

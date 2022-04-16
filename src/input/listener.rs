@@ -93,6 +93,10 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>,
                     NcReceived::Event(NcKey::Esc) => {
                         debug!("Escaping command mode.");
                         cmd_input = false;
+                        if let Err(e) = mpsc_send.send(Message::CmdExit).await {
+                            error!("Error sending CmdExit mpsc_send message: {}", e);
+                        };
+                        continue;
                     },
 
                     _ => {
@@ -101,8 +105,7 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>,
                             if let Err(e) = mpsc_send.send(Message::CmdInput(input_details.clone(),
                                                     oneshot_tx)).await {
                                     error!("Error sending CmdInput mpsc_send message: {}", e);
-                                };
-
+                            };
                         }
                     }
                 }
@@ -128,6 +131,9 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>,
                 if let NcReceived::Char(':') = recorded_input {
                     // Switch to COMMAND INPUT MODE.
                     debug!("COMMAND INPUT MODE - ON");
+                    if let Err(e) = mpsc_send.send(Message::CmdEnter).await {
+                            error!("Error sending CmdEnter mpsc_send message: {}", e);
+                    };
                     cmd_input = true;
                     buffer.clear();
                     continue;
@@ -141,7 +147,7 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>,
                             // TODO: Find efficient way of detecting AppQuit, currently for this one detection
                             // all trait objects of UserEvent are made to have get_name()
                             if let Some(ue) = kbt.get(&buffer) {
-                                exec_cmd(mpsc_send.clone(), oneshot_tx, ue).await;
+                                exec_cmd(mpsc_send.clone(), Some(oneshot_tx), ue).await;
 
                                 // If AppQuit, leave.
                                 if ue.eq("app_quit") {

@@ -33,7 +33,7 @@ pub async fn init() -> Result<()> {
 
     let (mpsc_tx, mpsc_rx) = mpsc::channel::<Message>(32);
 
-    tokio::spawn(manager_init(Arc::clone(&nc), config.tui, mpsc_rx));
+    tokio::spawn(manager_init(Arc::clone(&nc), config.tui, mpsc_rx, mpsc_tx.clone()));
     listener_init(Arc::clone(&nc), config.key_bindings, mpsc_tx.clone()).await.unwrap();
 
     Ok(()) 
