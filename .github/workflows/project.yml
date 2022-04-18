@@ -11,14 +11,6 @@ jobs:
         name: Label PR
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
-      - uses: actions/checkout@v2
-      - name: TODO to Issue
-        uses: ribtoks/tdg-github-action@master
-        with:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-          REF: ${{ github.ref }}
       - name: Run Changelog CI
         uses: saadmk11/changelog-ci@v1.0.0
         with:
