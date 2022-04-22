@@ -14,8 +14,8 @@ use libnotcurses_sys::{
 use std::ffi::CStr;
 
 use super::{ TuiPrefs, util::new_child_plane, Widget };
-use crate::input::input_message::InputMessage;
-use crate::state::Message;
+// use crate::input::input_message::InputMessage;
+// use crate::state::Message;
 use crate::tui::AppRes;
 use crate::tools::handle_err;
 

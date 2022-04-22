@@ -11,9 +11,9 @@ use nix::poll::{ poll, PollFd, PollFlags };
 use std::{ collections::HashMap, sync::{ Arc, Mutex } };
 use tokio::sync::{ oneshot, mpsc::Sender };
 
-use crate::events::app_events::init_tui;
+// use crate::events::app_events::init_tui;
 use crate::tui::{ App, AppRes, CmdPalette };
-use crate::state::Message;
+// use crate::state::Message;
 use super::command_to_event::exec_cmd;
 use super::util::key_bindings::{ 
     create_key_bindings_trie,
@@ -21,8 +21,6 @@ use super::util::key_bindings::{
     KeyBindingsTrie,
     KeyCombination,
 };
-use crate::input::input_message::InputMessage;
-use crate::tools::log_err;
 
 // -----------------------------------------------------------------------------------------------------------
 // * Listen for user input by polling.
@@ -95,9 +93,8 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
             // -----------------------------------------------------------------------------------------------
             // Cmd mode - false
             // -----------------------------------------------------------------------------------------------
-            else { // COMMAND INPUT MODE - false
+            else {
                 if let NcReceived::Char(':') = recorded_input {
-                    // Switch to COMMAND INPUT MODE.
                     debug!("Switching to CmdMode true.");
                     cmd_mode = true;
                     app.enter_cmd();
@@ -135,20 +132,20 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
 // * Generate key-bindings trie.
 // * Initialize input listener.
 // -----------------------------------------------------------------------------------------------------------
-pub async fn init_async(nc: Arc<Mutex<&mut Nc>>,
-                  kb: HashMap<String, String>,
-                  mpsc_send: Sender<Message>,
-                  )
-        -> Result<()> {
-    debug!("Init input listener.");
-
-    let kbt = create_key_bindings_trie(&kb).context("Error parsing key-bindings.")?;
-
-    init_tui(mpsc_send.clone()).await?; 
-
-    // listen_async(nc, kbt, mpsc_send.clone()).await?;
-    Ok(())
-}
+// pub async fn init_async(nc: Arc<Mutex<&mut Nc>>,
+//                   kb: HashMap<String, String>,
+//                   mpsc_send: Sender<Message>,
+//                   )
+//         -> Result<()> {
+//     debug!("Init input listener.");
+//
+//     let kbt = create_key_bindings_trie(&kb).context("Error parsing key-bindings.")?;
+//
+//     init_tui(mpsc_send.clone()).await?;
+//
+//     // listen_async(nc, kbt, mpsc_send.clone()).await?;
+//     Ok(())
+// }
 
 //TODO: Create tests for event loop checking and ensuring.
 

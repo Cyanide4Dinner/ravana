@@ -1,4 +1,4 @@
-use anyhow::{ anyhow, bail, Context, Result };
+use anyhow::{ bail, Context, Result };
 use libnotcurses_sys::{
     c_api::ncreader_offer_input,
     Nc,
@@ -9,15 +9,9 @@ use libnotcurses_sys::{
 };
 use log::{ debug, error, info };
 use std::sync::{ Arc, Mutex };
-use tokio::sync::oneshot;
-use tokio::sync::mpsc::Sender;
 
 use crate::{ 
-        input::{
-            input_message::InputMessage,
-            command_to_event
-        },
-        state::Message,
+        input::command_to_event,
         tools::{ handle_err, log_err }, 
         tui::{ AppRes, TuiPrefs }
 };
@@ -145,7 +139,7 @@ impl<'a> App<'a> {
     pub fn exec_cmd(&mut self) -> Result<()> {
         let mut cmd = self.cmd_plt.contents()?;
         debug!("Executing command: {:?}", cmd);
-        command_to_event::exec_cmd(&mut self, &cmd)
+        command_to_event::exec_cmd(self, &cmd)
     }
 
     // Render TUI.

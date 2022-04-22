@@ -13,7 +13,7 @@ use super::util::config::Config;
 // * Open up Config.toml for reading.
 // * Deserialize to Config struct.
 // -----------------------------------------------------------------------------------------------------------
-pub async fn load_config() -> Config {
+pub fn load_config() -> Config {
     debug!("Loading config.");
     for path in CONFIG_DIR_PATHS {
         match File::open(Path::new(&format!("{}{}", path, "/Config.toml"))) {

@@ -21,7 +21,9 @@ fn main(){
     //api::call_api();
     //api::oauth::oauth_process();
     // tui::test_tui();
-    events::lifecycle::init().await.unwrap();
+    // events::lifecycle::init().await.unwrap();
     // events::lifecycle::test_tui().unwrap();
+
+    events::lifecycle::ravana();
 }   
 
