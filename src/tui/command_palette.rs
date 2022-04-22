@@ -11,13 +11,13 @@ use libnotcurses_sys::{
     NcReceived,
     widgets::NcReaderOptions
 };
-use tokio::sync::oneshot;
-use tokio::sync::mpsc::Sender;
 use std::ffi::CStr;
 
 use super::{ TuiPrefs, util::new_child_plane, Widget };
 use crate::input::input_message::InputMessage;
 use crate::state::Message;
+use crate::tui::AppRes;
+use crate::tools::handle_err;
 
 // -----------------------------------------------------------------------------------------------------------
 // Command palette widget.
@@ -25,27 +25,25 @@ use crate::state::Message;
 pub struct CmdPalette<'a> {
     pub plane: &'a mut NcPlane,
     pub reader: &'a mut ncreader,
-
-    mpsc_send: Sender<Message>
 }
 
 impl<'a> CmdPalette<'a> {
     // Add input.
-    pub async fn input(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
+    pub fn input(&mut self, ncin: NcInput) -> Result<AppRes> {
         if unsafe { ncreader_offer_input(self.reader, &ncin) } {
-            if let Ok(s) = self.contents() {
-                if s.len() == 1 && (0, 0) == self.plane.cursor_yx() {
-                    self.mpsc_send.send(Message::CmdExit).await?;
-                    if let Err(e) = oneshot_tx.send(InputMessage::EndCmdMode) {
-                        error!("Error sending oneshot_tx: {:?}", e);
-                    };
-                    return Ok(())
-                }    
-            } 
-            if let Err(e) = oneshot_tx.send(InputMessage::ContinueCmdMode) {
-                error!("Error sending oneshot_tx: {:?}", e);
-            };
-            Ok(())
+            match self.contents() {
+                Ok(s) => {
+                    if s.len() == 1 && (0, 0) == self.plane.cursor_yx() {
+                        debug!("Quitting command palette on input clear.");
+                        return Ok(AppRes::CmdModeQuit);
+                    }    
+                },
+                Err(e) => {
+                    error!("Failed to get command palette contents: {}", e);
+                    return Err(e);
+                }
+            }
+            Ok(AppRes::CmdModeCont)
         } else {
             bail!("Unable to input to command palette: {:?}", ncin)
         }
@@ -86,8 +84,7 @@ impl<'a> Widget for CmdPalette<'a> {
             x: i32,
             y: i32,
             dim_x: u32,
-            dim_y: u32,
-            mpsc_send: Sender<Message>
+            dim_y: u32
           ) -> Result<Self> {
         debug!("Creating new command palette.");
 
@@ -116,8 +113,7 @@ impl<'a> Widget for CmdPalette<'a> {
 
         Ok(Self {
             plane,
-            reader,
-            mpsc_send
+            reader
         })
     }
 

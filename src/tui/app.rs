@@ -18,7 +18,8 @@ use crate::{
             command_to_event
         },
         state::Message,
-        tools::{ handle_err, log_err }, tui::TuiPrefs 
+        tools::{ handle_err, log_err }, 
+        tui::{ AppRes, TuiPrefs }
 };
 use super::subreddit_listing_page::SubListPage;
 use super::{CmdPalette,
@@ -39,9 +40,6 @@ pub struct App<'a> {
         plane: &'a mut NcPlane,
         tui_prefs: TuiPrefs,
 
-        // For sending messages to trigger events.
-        mpsc_send: Sender<Message>,
-
         // Pages currently in the application.
         pub pages: Vec<Box<dyn Page + 'a>>,
 
@@ -50,7 +48,7 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs, mpsc_send: Sender<Message>) 
+    pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs) 
             -> Result<App<'b>> {
         let mut nc_lock = nc.lock().unwrap();
         let stdplane = unsafe { nc_lock.stdplane() }; 
@@ -72,8 +70,7 @@ impl<'a> App<'a> {
                               0,
                               (stdplane.dim_y() - 1) as i32,
                               stdplane.dim_x(),
-                              1,
-                              mpsc_send.clone()
+                              1
                               )
         )?;
 
@@ -82,8 +79,6 @@ impl<'a> App<'a> {
                 nc,
                 plane: app_plane,
                 tui_prefs,
-
-                mpsc_send,
 
                 pages: Vec::new(),
 
@@ -103,7 +98,6 @@ impl<'a> App<'a> {
                                                             0,
                                                             self.plane.dim_x(),
                                                             self.plane.dim_y(),
-                                                            self.mpsc_send.clone()
                                                             ))?;
 
                 // DEV
@@ -126,16 +120,18 @@ impl<'a> App<'a> {
     }
 
     // TODO: Find better ways of ordering planes as layers in App.
-    pub async fn input_cmd_plt(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
-        log_err!(self.cmd_plt.input(ncin, oneshot_tx).await)?;
-        // command_to_event::exec_cmd(None, cmd).await;
-        self.render()
+    pub fn input_cmd_plt(&mut self, ncin: NcInput) -> Result<AppRes> {
+        let res = log_err!(self.cmd_plt.input(ncin))?;
+        self.render()?;
+        Ok(res)
     }
 
     pub fn enter_cmd(&mut self) -> Result<()> {
         debug!("Entering CmdMode.");
+
         // Put : in CmdPalette
         unsafe { ncreader_offer_input(self.cmd_plt.reader, &NcInput::new(':')) };
+
         self.render()
     }
 
@@ -145,11 +141,11 @@ impl<'a> App<'a> {
         self.render()
     }
 
-    pub async fn exec_cmd(&mut self) -> Result<()> {
-        debug!("Executing command: {:?}", self.cmd_plt.contents()?);
+    // Execute command typed in command palette.
+    pub fn exec_cmd(&mut self) -> Result<()> {
         let mut cmd = self.cmd_plt.contents()?;
-        command_to_event::exec_cmd(self.mpsc_send.clone(), None, &cmd.split_off(1)).await;
-        Ok(())
+        debug!("Executing command: {:?}", cmd);
+        command_to_event::exec_cmd(&mut self, &cmd)
     }
 
     // Render TUI.

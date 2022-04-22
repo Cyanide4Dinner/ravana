@@ -7,11 +7,9 @@ use libnotcurses_sys::{
     c_api
 };
 use log::{ debug, error };
-use tokio::sync::mpsc::Sender;
 
 use crate::tools::{ handle_err, log_err };
 use super::{  page::Page, TuiPrefs, Widget, util::new_child_plane };
-use crate::state::Message;
 
 // Data to display in a post item of subreddit listing.
 pub struct SubListPostData<'a> {
@@ -124,8 +122,7 @@ impl<'a> Widget for SubListPost<'a> {
                     x: i32,
                     y: i32,
                     dim_x: u32,
-                    dim_y: u32,
-                    mpsc_send: Sender<Message>
+                    dim_y: u32
                    ) -> Result<Self> {
         debug!("Creating new post.");
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
@@ -156,8 +153,6 @@ impl<'a> Widget for SubListPost<'a> {
 pub struct SubListPage<'a> {
     plane: &'a mut NcPlane,
     posts: Vec<SubListPost<'a>>,
-
-    mpsc_send: Sender<Message>
 }
 
 impl<'a> SubListPage<'a> {
@@ -170,7 +165,6 @@ impl<'a> SubListPage<'a> {
                 0,
                 self.plane.dim_x(),
                 self.plane.dim_y(),
-                self.mpsc_send.clone()
             )?);
         Ok(())
     }
@@ -183,7 +177,6 @@ impl<'a> Widget for SubListPage<'a> {
                    y: i32,
                    dim_x: u32,
                    dim_y: u32,
-                   mpsc_send: Sender<Message>
                    ) -> Result<Self> {
         debug!("Creating new SubListPage page.");
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
@@ -194,8 +187,6 @@ impl<'a> Widget for SubListPage<'a> {
         Ok(Self { 
             plane,
             posts: vec![],
-
-            mpsc_send
         })
     }
 

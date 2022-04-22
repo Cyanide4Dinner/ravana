@@ -16,7 +16,7 @@ use crate::tui::val_tui_prefs_des;
 // * Create channel for input -> manager communication.
 // * Spawn input listener and manager (TUI) jobs.
 // -----------------------------------------------------------------------------------------------------------
-pub async fn init() -> Result<()> {
+pub fn init() -> Result<()> {
     let config = load_config().await;
 
     // Validate config
@@ -37,4 +37,12 @@ pub async fn init() -> Result<()> {
     listener_init(Arc::clone(&nc), config.key_bindings, mpsc_tx.clone()).await.unwrap();
 
     Ok(()) 
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// * Main loop.
+// * Input --> Process --> State --> TUI --> Input.
+// -----------------------------------------------------------------------------------------------------------
+pub fn ravana() {
+
 }

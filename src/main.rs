@@ -11,8 +11,7 @@ pub mod input;
 pub mod state;
 pub mod tools;
 
-#[tokio::main]
-async fn main(){
+fn main(){
     env_logger::init();
     debug!("Starting.");
     // let rt = tokio::runtime::Runtime::new().unwrap();

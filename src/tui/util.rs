@@ -1,10 +1,8 @@
 use anyhow::{ anyhow, Result };
 use log::{ debug, error, info };
 use libnotcurses_sys::{ NcPlane, NcRgb };
-use tokio::sync::mpsc::Sender;
 
 use crate::jobs::TuiPrefsDes;
-use crate::state::Message;
 
 // TODO: Add test to check if we're validating all fields and formats.
 pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
@@ -187,8 +185,7 @@ pub trait Widget: Sized {
             x: i32,
             y: i32,
             dim_x: u32,
-            dim_y: u32,
-            mpsc_send: Sender<Message>
+            dim_y: u32
             ) -> Result<Self>;
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()>;
 }
