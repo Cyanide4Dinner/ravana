@@ -14,7 +14,6 @@ use super::util::config::Config;
 // * Deserialize to Config struct.
 // -----------------------------------------------------------------------------------------------------------
 pub fn load_config() -> Config {
-    debug!("Loading config.");
     for path in CONFIG_DIR_PATHS {
         match File::open(Path::new(&format!("{}{}", path, "/Config.toml"))) {
             Ok(mut file) => {

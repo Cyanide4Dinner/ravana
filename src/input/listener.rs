@@ -1,4 +1,4 @@
-use anyhow::{ Context, Result };
+use anyhow::Result;
 use libnotcurses_sys::{
     c_api::notcurses_inputready_fd,
     Nc,
@@ -8,18 +8,16 @@ use libnotcurses_sys::{
 }; 
 use log::{ debug, error, warn };
 use nix::poll::{ poll, PollFd, PollFlags };
-use std::{ collections::HashMap, sync::{ Arc, Mutex } };
-use tokio::sync::{ oneshot, mpsc::Sender };
+use std::sync::{ Arc, Mutex };
 
-// use crate::events::app_events::init_tui;
-use crate::tui::{ App, AppRes, CmdPalette };
-// use crate::state::Message;
-use super::command_to_event::exec_cmd;
-use super::util::key_bindings::{ 
-    create_key_bindings_trie,
-    Key,
-    KeyBindingsTrie,
-    KeyCombination,
+use crate::tui::{ App, AppRes, cmd_plt_val_input };
+use super::{ 
+    command_to_event::exec_cmd,
+    util::key_bindings::{ 
+        Key,
+        KeyBindingsTrie,
+        KeyCombination,
+    }
 };
 
 // -----------------------------------------------------------------------------------------------------------
@@ -69,7 +67,7 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
 
                     _ => {
                         // Validate if input recieved is compatible.
-                        if CmdPalette::val_input(&recorded_input) { 
+                        if cmd_plt_val_input(&recorded_input) { 
                             match app.input_cmd_plt(input_details.clone()) {
                                 Ok(AppRes::CmdModeCont) => {
                                     continue;

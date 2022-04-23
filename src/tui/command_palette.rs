@@ -1,5 +1,5 @@
-use anyhow::{ anyhow, bail, Result };
-use log::{ debug, error, info };
+use anyhow::{ bail, Result };
+use log::error;
 use libnotcurses_sys::{
     c_api::{ ncreader, ncreader_contents, ncreader_clear, ncreader_destroy, ncreader_offer_input },
     NcChannel,
@@ -13,11 +13,9 @@ use libnotcurses_sys::{
 };
 use std::ffi::CStr;
 
-use super::{ TuiPrefs, util::new_child_plane, Widget };
-// use crate::input::input_message::InputMessage;
-// use crate::state::Message;
+use super::{ TuiPrefs, util::new_child_plane, util::Widget };
 use crate::tui::AppRes;
-use crate::tools::handle_err;
+use crate::tools::log_err_ret;
 
 // -----------------------------------------------------------------------------------------------------------
 // Command palette widget.
@@ -34,7 +32,6 @@ impl<'a> CmdPalette<'a> {
             match self.contents() {
                 Ok(s) => {
                     if s.len() == 1 && (0, 0) == self.plane.cursor_yx() {
-                        debug!("Quitting command palette on input clear.");
                         return Ok(AppRes::CmdModeQuit);
                     }    
                 },
@@ -45,19 +42,7 @@ impl<'a> CmdPalette<'a> {
             }
             Ok(AppRes::CmdModeCont)
         } else {
-            bail!("Unable to input to command palette: {:?}", ncin)
-        }
-    }
-
-    // Validate input.
-    pub fn val_input(ncr: &NcReceived) -> bool {
-        match ncr {
-            NcReceived::Char(_) => true,
-            NcReceived::Event(NcKey::Left) => true,
-            NcReceived::Event(NcKey::Right) => true,
-            NcReceived::Event(NcKey::Enter) => true,
-            NcReceived::Event(NcKey::Backspace) => true,
-            _ => false
+            log_err_ret!(bail!("Unable to input to command palette: {:?}", ncin))
         }
     }
 
@@ -72,10 +57,21 @@ impl<'a> CmdPalette<'a> {
 
     // Destroy reader nc widget. Required for graceful termination of application.
     pub fn destroy_reader(&mut self) {
-        debug!("Destroying CmdPalette.");
         unsafe { ncreader_destroy(self.reader, std::ptr::null::<*mut *mut i8>() as *mut *mut i8) }
     }
 
+}
+
+// Validate input for command palette.
+pub fn cmd_plt_val_input(ncr: &NcReceived) -> bool {
+    match ncr {
+        NcReceived::Char(_) => true,
+        NcReceived::Event(NcKey::Left) => true,
+        NcReceived::Event(NcKey::Right) => true,
+        NcReceived::Event(NcKey::Enter) => true,
+        NcReceived::Event(NcKey::Backspace) => true,
+        _ => false
+    }
 }
 
 impl<'a> Widget for CmdPalette<'a> {
@@ -86,7 +82,6 @@ impl<'a> Widget for CmdPalette<'a> {
             dim_x: u32,
             dim_y: u32
           ) -> Result<Self> {
-        debug!("Creating new command palette.");
 
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
