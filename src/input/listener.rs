@@ -10,7 +10,10 @@ use log::{ debug, error, warn };
 use nix::poll::{ poll, PollFd, PollFlags };
 use std::sync::{ Arc, Mutex };
 
-use crate::tui::{ App, AppRes, cmd_plt_val_input };
+use crate::{ 
+    tools::{ log_err_desc },
+    tui::{ App, AppRes, cmd_plt_val_input }
+};
 use super::{ 
     command_to_event::exec_cmd,
     util::key_bindings::{ 
@@ -53,7 +56,7 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
                     NcReceived::Event(NcKey::Enter) => {
                         debug!("Preparing to execute command.");
                         cmd_mode = false;
-                        app.exec_cmd();
+                        log_err_desc!(app.exec_cmd(), "Unable to execute command");
                         continue;
                     },
 
@@ -61,7 +64,7 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
                     NcReceived::Event(NcKey::Esc) => {
                         debug!("Switching CmdMode false.");
                         cmd_mode = false;
-                        app.exit_cmd();
+                        log_err_desc!(app.exit_cmd(), "Unable to exit command palette");
                         continue;
                     },
 
@@ -78,11 +81,10 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
                                 },
                                 Err(e) => {
                                     error!("{}", e);
-                                }
+                                },
                                 Ok(ar) => {
                                     error!("Invalid return from App to listener {:?}", ar)
                                 }
-
                             }
                         }
                     }
@@ -95,7 +97,7 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
                 if let NcReceived::Char(':') = recorded_input {
                     debug!("Switching to CmdMode true.");
                     cmd_mode = true;
-                    app.enter_cmd();
+                    log_err_desc!(app.enter_cmd(), "Unable to enter command palette");
                     buffer.clear();
                     continue;
                 } else {
@@ -108,7 +110,7 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
                             // TODO: Find efficient way of detecting AppQuit, currently for this one detection
                             // all trait objects of UserEvent are made to have get_name()
                             if let Some(cmd) = kbt.get(&buffer) {
-                                exec_cmd(app, cmd);
+                                log_err_desc!(exec_cmd(app, cmd), "");
 
                                 // If AppQuit, leave.
                                 if cmd.eq("app_quit") {

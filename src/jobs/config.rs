@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::{ debug, error, info, warn };
+use log::{ error, info, warn };
 use std::{
     fs::File,
     io::prelude::*,

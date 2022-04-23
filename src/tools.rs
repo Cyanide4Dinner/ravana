@@ -1,10 +1,9 @@
-use anyhow::Context;
-use log::error;
-
 // Log error with description.
 macro_rules! log_err_desc {
     ($e:expr, $s:expr) => {
-        $e.map_err(|e| { error!("{}: {:?}", $s, e)})
+        if let Err(e) = $e {
+            error!("{} {}", $s, e)
+        }
     };
 }
 
@@ -15,13 +14,6 @@ macro_rules! log_err_desc_ret {
     };
 }
 
-// Log error.
-macro_rules! log_err {
-    ($e:expr) => {
-        $e.map_err(|e| {error!("{:?}", e)})
-    }
-}
-
 // Log error and return error.
 macro_rules! log_err_ret {
     ($e:expr) => {
@@ -30,6 +22,5 @@ macro_rules! log_err_ret {
 }
 
 pub(super) use log_err_desc;
-pub(super) use log_err;
 pub(super) use log_err_desc_ret;
 pub(super) use log_err_ret;

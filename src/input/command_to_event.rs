@@ -12,7 +12,7 @@ use crate::{
 // * Parse a command.
 // * Trigger corresponding events.
 // -----------------------------------------------------------------------------------------------------------
-pub fn exec_cmd(app: &mut App,
+pub fn exec_cmd(_app: &mut App,
                       cmd: &str) -> Result<()> {
     let args: Vec<&str> = cmd.split(" ").collect();
 

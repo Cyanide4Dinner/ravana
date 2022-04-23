@@ -6,7 +6,6 @@ mod tui;
 mod events;
 mod jobs;
 mod input;
-mod state;
 mod tools;
 
 fn main(){

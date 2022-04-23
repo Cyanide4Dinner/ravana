@@ -117,7 +117,7 @@ impl<'a> SubListPost<'a> {
 }
 
 impl<'a> Widget for SubListPost<'a> {
-    fn new(tui_prefs: &TuiPrefs,
+    fn new(_tui_prefs: &TuiPrefs,
                     parent_plane: &mut NcPlane,
                     x: i32,
                     y: i32,
@@ -154,7 +154,7 @@ pub struct SubListPage<'a> {
 }
 
 impl<'a> SubListPage<'a> {
-    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, data: SubListPostData<'a>) -> Result<()> {
+    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, _data: SubListPostData<'a>) -> Result<()> {
         self.posts.push(SubListPost::new(
                 tui_prefs,
                 self.plane,

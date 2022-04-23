@@ -1,4 +1,3 @@
-mod tui;
 mod app;
 mod app_response;
 

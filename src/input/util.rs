@@ -1,7 +1,3 @@
-pub struct InputState {
-    pub cmd_mode: bool,
-}
-
 pub mod key_bindings {
     use anyhow::{ bail, Result };
     #[cfg(test)]

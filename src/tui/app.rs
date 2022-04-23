@@ -1,4 +1,4 @@
-use anyhow::{ bail, Context, Result };
+use anyhow::{ anyhow, Context, Result };
 use libnotcurses_sys::{
     c_api::ncreader_offer_input,
     Nc,
@@ -133,7 +133,7 @@ impl<'a> App<'a> {
 
     // Execute command typed in command palette.
     pub fn exec_cmd(&mut self) -> Result<()> {
-        let mut cmd = log_err_ret!(self.cmd_plt.contents())?;
+        let cmd = log_err_ret!(self.cmd_plt.contents())?;
         command_to_event::exec_cmd(self, &cmd)
     }
 
@@ -146,8 +146,9 @@ impl<'a> App<'a> {
         if let Ok(mut nc_lock) = self.nc.lock() {
             log_err_desc_ret!(nc_lock.render(), "Failed to render app")?;
             return Ok(())
+        } else {
+            return log_err_ret!(Err(anyhow!("Failed to render App: unable to lock Nc.")))
         }
-        log_err_ret!(bail!("Failed to render app: unable to lock Nc."))
     }
 }
 

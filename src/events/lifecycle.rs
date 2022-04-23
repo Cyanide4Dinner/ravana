@@ -38,7 +38,7 @@ pub fn ravana() -> Result<()> {
 
     let kbt = log_err_desc_ret!(create_key_bindings_trie(&config.key_bindings), "Failed to create KB trie")?;
 
-    listen(nc, kbt, &mut app);
+    listen(nc, kbt, &mut app).unwrap();
 
     Ok(())
 }

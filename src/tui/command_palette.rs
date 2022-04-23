@@ -1,4 +1,4 @@
-use anyhow::{ bail, Result };
+use anyhow::{ anyhow, Result };
 use log::error;
 use libnotcurses_sys::{
     c_api::{ ncreader, ncreader_contents, ncreader_clear, ncreader_destroy, ncreader_offer_input },
@@ -40,10 +40,9 @@ impl<'a> CmdPalette<'a> {
                     return Err(e);
                 }
             }
-            Ok(AppRes::CmdModeCont)
-        } else {
-            log_err_ret!(bail!("Unable to input to command palette: {:?}", ncin))
+            return Ok(AppRes::CmdModeCont)
         }
+        return log_err_ret!(Err(anyhow!("Unable to input to command palette: {:?}", ncin)))
     }
 
     // Get contents of command palette.
@@ -75,7 +74,7 @@ pub fn cmd_plt_val_input(ncr: &NcReceived) -> bool {
 }
 
 impl<'a> Widget for CmdPalette<'a> {
-    fn new(tui_prefs: &TuiPrefs,
+    fn new(_: &TuiPrefs,
             parent_plane: &mut NcPlane,
             x: i32,
             y: i32,
@@ -112,7 +111,7 @@ impl<'a> Widget for CmdPalette<'a> {
         })
     }
 
-    fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
+    fn draw(&mut self, _tui_prefs: &TuiPrefs) -> Result<()> {
         Ok(())
     }
 }
