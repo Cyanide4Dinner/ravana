@@ -1,5 +1,5 @@
 use anyhow::Result;
-use log::{ debug, error, info, warn };
+use log::{ error, info, warn };
 use std::{
     fs::File,
     io::prelude::*,
@@ -13,8 +13,7 @@ use super::util::config::Config;
 // * Open up Config.toml for reading.
 // * Deserialize to Config struct.
 // -----------------------------------------------------------------------------------------------------------
-pub async fn load_config() -> Config {
-    debug!("Loading config.");
+pub fn load_config() -> Config {
     for path in CONFIG_DIR_PATHS {
         match File::open(Path::new(&format!("{}{}", path, "/Config.toml"))) {
             Ok(mut file) => {

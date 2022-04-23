@@ -1,9 +1,8 @@
 // -----------------------------------------------------------------------------------------------------------
-// Messages sent to input (listener) of oneshot channel. 
+// Response given by App on any action.
 // -----------------------------------------------------------------------------------------------------------
 #[derive(Debug)]
-pub enum InputMessage {
-    AppQuit,
-    ContinueCmdMode,
-    EndCmdMode,
+pub enum AppRes {
+    CmdModeCont,
+    CmdModeQuit
 }

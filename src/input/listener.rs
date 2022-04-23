@@ -1,4 +1,4 @@
-use anyhow::{ Context, Result };
+use anyhow::Result;
 use libnotcurses_sys::{
     c_api::notcurses_inputready_fd,
     Nc,
@@ -8,57 +8,32 @@ use libnotcurses_sys::{
 }; 
 use log::{ debug, error, warn };
 use nix::poll::{ poll, PollFd, PollFlags };
-use std::{ collections::HashMap, sync::{ Arc, Mutex } };
-use tokio::sync::{ oneshot, mpsc::Sender };
+use std::sync::{ Arc, Mutex };
 
-use crate::events::app_events::init_tui;
-use crate::tui::CmdPalette;
-use crate::state::Message;
-use super::command_to_event::exec_cmd;
-use super::util::key_bindings::{ 
-    create_key_bindings_trie,
-    Key,
-    KeyBindingsTrie,
-    KeyCombination,
+use crate::{ 
+    tools::{ log_err_desc },
+    tui::{ App, AppRes, cmd_plt_val_input }
 };
-use crate::input::input_message::InputMessage;
+use super::{ 
+    command_to_event::exec_cmd,
+    util::key_bindings::{ 
+        Key,
+        KeyBindingsTrie,
+        KeyCombination,
+    }
+};
 
 // -----------------------------------------------------------------------------------------------------------
-// * Generate key-bindings trie.
-// * Initialize input listener.
+// * Listen for user input by polling.
+// * Return event.
 // -----------------------------------------------------------------------------------------------------------
-pub async fn init(nc: Arc<Mutex<&mut Nc>>,
-                  kb: HashMap<String, String>,
-                  mpsc_send: Sender<Message>,
-                  )
-        -> Result<()> {
-    debug!("Init input listener.");
-
-    let kbt = create_key_bindings_trie(&kb).context("Error parsing key-bindings.")?;
-
-    init_tui(mpsc_send.clone()).await?; 
-
-    listen(nc, kbt, mpsc_send.clone()).await?;
-    Ok(())
-}
-
-//TODO: Create tests for event loop checking and ensuring.
-
-// -----------------------------------------------------------------------------------------------------------
-// * Poll on inputready_fd.
-// * Buffer inputs until key-bindings match.
-// * Manage COMMAND INPUT MODE, toggling it based on key-bindings.
-// -----------------------------------------------------------------------------------------------------------
-async fn listen(nc: Arc<Mutex<&mut Nc>>,
-                kbt: KeyBindingsTrie,
-                mpsc_send: Sender<Message>
-                ) -> Result<()> {
+pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> Result<()> {
     debug!("Begin input listening loop.");
     let mut buffer: KeyCombination = KeyCombination::new();
     let mut input_details = NcInput::new_empty();
 
-    // COMMAND INPUT MODE
-    let mut cmd_input: bool = false;
+    // Command mode - Enter command in palette.
+    let mut cmd_mode: bool = false;
 
     let mut nc_lock = nc.lock().unwrap();
     let input_fd = PollFd::new(
@@ -67,75 +42,62 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>,
     drop(nc_lock);
 
     loop {
-        // Oneshot channel to receive response for input listener.
-        let (oneshot_tx, oneshot_rx) = oneshot::channel::<InputMessage>();
-
         if let Ok(_) = poll(&mut [input_fd], -1) {
             nc_lock = nc.lock().unwrap();
             let recorded_input = nc_lock.get_nblock(Some(&mut input_details))?;
             drop(nc_lock);
 
             // -----------------------------------------------------------------------------------------------
-            // COMMAND INPUT MODE - true
+            // Cmd mode - true
             // -----------------------------------------------------------------------------------------------
-            if cmd_input {
+            if cmd_mode {
                 match recorded_input {
                     // Execute command.
                     NcReceived::Event(NcKey::Enter) => {
                         debug!("Preparing to execute command.");
-                        cmd_input = false;
-                        if let Err(e) = mpsc_send.send(Message::CmdExec).await {
-                            error!("Error sending CmdExec mpsc_send message: {}", e);
-                        };
+                        cmd_mode = false;
+                        log_err_desc!(app.exec_cmd(), "Unable to execute command");
                         continue;
                     },
 
                     // Escape command mode.
                     NcReceived::Event(NcKey::Esc) => {
-                        debug!("Escaping command mode.");
-                        cmd_input = false;
-                        if let Err(e) = mpsc_send.send(Message::CmdExit).await {
-                            error!("Error sending CmdExit mpsc_send message: {}", e);
-                        };
+                        debug!("Switching CmdMode false.");
+                        cmd_mode = false;
+                        log_err_desc!(app.exit_cmd(), "Unable to exit command palette");
                         continue;
                     },
 
                     _ => {
                         // Validate if input recieved is compatible.
-                        if CmdPalette::val_input(&recorded_input) { 
-                            if let Err(e) = mpsc_send.send(Message::CmdInput(input_details.clone(),
-                                                    oneshot_tx)).await {
-                                    error!("Error sending CmdInput mpsc_send message: {}", e);
-                            };
+                        if cmd_plt_val_input(&recorded_input) { 
+                            match app.input_cmd_plt(input_details.clone()) {
+                                Ok(AppRes::CmdModeCont) => {
+                                    continue;
+                                },
+                                Ok(AppRes::CmdModeQuit) => {
+                                    cmd_mode = false;
+                                    continue;
+                                },
+                                Err(e) => {
+                                    error!("{}", e);
+                                },
+                                Ok(ar) => {
+                                    error!("Invalid return from App to listener {:?}", ar)
+                                }
+                            }
                         }
                     }
-                }
-
-                // Wait for confirmation before continuing.
-                if let Ok(input_msg) = oneshot_rx.await {
-                    match input_msg {
-                        InputMessage::ContinueCmdMode => { continue; },
-                        InputMessage::EndCmdMode => { cmd_input = false; continue; },
-                        _ => { 
-                            error!("Wrong message received by listener in CmdMode: {:?}", input_msg); 
-                            cmd_input = false;
-                        }
-                    }
-                } else {
-                    error!("Error receiving from oneshot channel in listener.");
                 }
             } 
             // -----------------------------------------------------------------------------------------------
-            // COMMAND INPUT MODE - false
+            // Cmd mode - false
             // -----------------------------------------------------------------------------------------------
-            else { // COMMAND INPUT MODE - false
+            else {
                 if let NcReceived::Char(':') = recorded_input {
-                    // Switch to COMMAND INPUT MODE.
-                    debug!("COMMAND INPUT MODE - ON");
-                    if let Err(e) = mpsc_send.send(Message::CmdEnter).await {
-                            error!("Error sending CmdEnter mpsc_send message: {}", e);
-                    };
-                    cmd_input = true;
+                    debug!("Switching to CmdMode true.");
+                    cmd_mode = true;
+                    log_err_desc!(app.enter_cmd(), "Unable to enter command palette");
                     buffer.clear();
                     continue;
                 } else {
@@ -147,11 +109,11 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>,
                         else {
                             // TODO: Find efficient way of detecting AppQuit, currently for this one detection
                             // all trait objects of UserEvent are made to have get_name()
-                            if let Some(ue) = kbt.get(&buffer) {
-                                exec_cmd(mpsc_send.clone(), Some(oneshot_tx), ue).await;
+                            if let Some(cmd) = kbt.get(&buffer) {
+                                log_err_desc!(exec_cmd(app, cmd), "");
 
                                 // If AppQuit, leave.
-                                if ue.eq("app_quit") {
+                                if cmd.eq("app_quit") {
                                     break;
                                 } 
                                 buffer.clear();
@@ -162,8 +124,151 @@ async fn listen(nc: Arc<Mutex<&mut Nc>>,
             }
         }
     }
+
     Ok(())
-} 
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// * Generate key-bindings trie.
+// * Initialize input listener.
+// -----------------------------------------------------------------------------------------------------------
+// pub async fn init_async(nc: Arc<Mutex<&mut Nc>>,
+//                   kb: HashMap<String, String>,
+//                   mpsc_send: Sender<Message>,
+//                   )
+//         -> Result<()> {
+//     debug!("Init input listener.");
+//
+//     let kbt = create_key_bindings_trie(&kb).context("Error parsing key-bindings.")?;
+//
+//     init_tui(mpsc_send.clone()).await?;
+//
+//     // listen_async(nc, kbt, mpsc_send.clone()).await?;
+//     Ok(())
+// }
+
+//TODO: Create tests for event loop checking and ensuring.
+
+// -----------------------------------------------------------------------------------------------------------
+// * Poll on inputready_fd.
+// * Buffer inputs until key-bindings match.
+// * Manage COMMAND INPUT MODE, toggling it based on key-bindings.
+// -----------------------------------------------------------------------------------------------------------
+// async fn listen_async(nc: Arc<Mutex<&mut Nc>>,
+//                 kbt: KeyBindingsTrie,
+//                 mpsc_send: Sender<Message>
+//                 ) -> Result<()> {
+//     debug!("Begin input listening loop.");
+//     let mut buffer: KeyCombination = KeyCombination::new();
+//     let mut input_details = NcInput::new_empty();
+//
+//     // COMMAND INPUT MODE
+//     let mut cmd_input: bool = false;
+//
+//     let mut nc_lock = nc.lock().unwrap();
+//     let input_fd = PollFd::new(
+//         unsafe { notcurses_inputready_fd(*nc_lock as &mut Nc as *mut Nc) },
+//         PollFlags::POLLIN);
+//     drop(nc_lock);
+//
+//     loop {
+//         // Oneshot channel to receive response for input listener.
+//         let (oneshot_tx, oneshot_rx) = oneshot::channel::<InputMessage>();
+//
+//         if let Ok(_) = poll(&mut [input_fd], -1) {
+//             nc_lock = nc.lock().unwrap();
+//             let recorded_input = nc_lock.get_nblock(Some(&mut input_details))?;
+//             drop(nc_lock);
+//
+//             // -----------------------------------------------------------------------------------------------
+//             // COMMAND INPUT MODE - true
+//             // -----------------------------------------------------------------------------------------------
+//             if cmd_input {
+//                 match recorded_input {
+//                     // Execute command.
+//                     NcReceived::Event(NcKey::Enter) => {
+//                         debug!("Preparing to execute command.");
+//                         cmd_input = false;
+//                         if let Err(e) = mpsc_send.send(Message::CmdExec).await {
+//                             error!("Error sending CmdExec mpsc_send message: {}", e);
+//                         };
+//                         continue;
+//                     },
+//
+//                     // Escape command mode.
+//                     NcReceived::Event(NcKey::Esc) => {
+//                         debug!("Escaping command mode.");
+//                         cmd_input = false;
+//                         if let Err(e) = mpsc_send.send(Message::CmdExit).await {
+//                             error!("Error sending CmdExit mpsc_send message: {}", e);
+//                         };
+//                         continue;
+//                     },
+//
+//                     _ => {
+//                         // Validate if input recieved is compatible.
+//                         if CmdPalette::val_input(&recorded_input) {
+//                             if let Err(e) = mpsc_send.send(Message::CmdInput(input_details.clone(),
+//                                                     oneshot_tx)).await {
+//                                     error!("Error sending CmdInput mpsc_send message: {}", e);
+//                             };
+//                         }
+//                     }
+//                 }
+//
+//                 // Wait for confirmation before continuing.
+//                 if let Ok(input_msg) = oneshot_rx.await {
+//                     match input_msg {
+//                         InputMessage::ContinueCmdMode => { continue; },
+//                         InputMessage::EndCmdMode => { cmd_input = false; continue; },
+//                         _ => {
+//                             error!("Wrong message received by listener in CmdMode: {:?}", input_msg);
+//                             cmd_input = false;
+//                         }
+//                     }
+//                 } else {
+//                     error!("Error receiving from oneshot channel in listener.");
+//                 }
+//             }
+//             // -----------------------------------------------------------------------------------------------
+//             // COMMAND INPUT MODE - false
+//             // -----------------------------------------------------------------------------------------------
+//             else { // COMMAND INPUT MODE - false
+//                 if let NcReceived::Char(':') = recorded_input {
+//                     // Switch to COMMAND INPUT MODE.
+//                     debug!("COMMAND INPUT MODE - ON");
+//                     if let Err(e) = mpsc_send.send(Message::CmdEnter).await {
+//                             error!("Error sending CmdEnter mpsc_send message: {}", e);
+//                     };
+//                     cmd_input = true;
+//                     buffer.clear();
+//                     continue;
+//                 } else {
+//                     if let Some(mut key) = gen_key(&recorded_input, &input_details) {
+//                         buffer.append(&mut key);
+//                         if let None = kbt.get_node(&buffer) {
+//                             buffer.clear();
+//                         }
+//                         else {
+//                             // TODO: Find efficient way of detecting AppQuit, currently for this one detection
+//                             // all trait objects of UserEvent are made to have get_name()
+//                             if let Some(ue) = kbt.get(&buffer) {
+//                                 exec_cmd(mpsc_send.clone(), Some(oneshot_tx), ue).await;
+//
+//                                 // If AppQuit, leave.
+//                                 if ue.eq("app_quit") {
+//                                     break;
+//                                 }
+//                                 buffer.clear();
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+//     Ok(())
+// }
 
 //TODO: Test function to see if all keys are covered and all possibilities handled.
 

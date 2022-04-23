@@ -1,5 +1,5 @@
-use anyhow::{ anyhow, bail, Result };
-use log::{ debug, error, info };
+use anyhow::{ anyhow, Result };
+use log::error;
 use libnotcurses_sys::{
     c_api::{ ncreader, ncreader_contents, ncreader_clear, ncreader_destroy, ncreader_offer_input },
     NcChannel,
@@ -11,13 +11,11 @@ use libnotcurses_sys::{
     NcReceived,
     widgets::NcReaderOptions
 };
-use tokio::sync::oneshot;
-use tokio::sync::mpsc::Sender;
 use std::ffi::CStr;
 
-use super::{ TuiPrefs, util::new_child_plane, Widget };
-use crate::input::input_message::InputMessage;
-use crate::state::Message;
+use super::{ TuiPrefs, util::new_child_plane, util::Widget };
+use crate::tui::AppRes;
+use crate::tools::log_err_ret;
 
 // -----------------------------------------------------------------------------------------------------------
 // Command palette widget.
@@ -25,42 +23,26 @@ use crate::state::Message;
 pub struct CmdPalette<'a> {
     pub plane: &'a mut NcPlane,
     pub reader: &'a mut ncreader,
-
-    mpsc_send: Sender<Message>
 }
 
 impl<'a> CmdPalette<'a> {
     // Add input.
-    pub async fn input(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
+    pub fn input(&mut self, ncin: NcInput) -> Result<AppRes> {
         if unsafe { ncreader_offer_input(self.reader, &ncin) } {
-            if let Ok(s) = self.contents() {
-                if s.len() == 1 && (0, 0) == self.plane.cursor_yx() {
-                    self.mpsc_send.send(Message::CmdExit).await?;
-                    if let Err(e) = oneshot_tx.send(InputMessage::EndCmdMode) {
-                        error!("Error sending oneshot_tx: {:?}", e);
-                    };
-                    return Ok(())
-                }    
-            } 
-            if let Err(e) = oneshot_tx.send(InputMessage::ContinueCmdMode) {
-                error!("Error sending oneshot_tx: {:?}", e);
-            };
-            Ok(())
-        } else {
-            bail!("Unable to input to command palette: {:?}", ncin)
+            match self.contents() {
+                Ok(s) => {
+                    if s.len() == 1 && (0, 0) == self.plane.cursor_yx() {
+                        return Ok(AppRes::CmdModeQuit);
+                    }    
+                },
+                Err(e) => {
+                    error!("Failed to get command palette contents: {}", e);
+                    return Err(e);
+                }
+            }
+            return Ok(AppRes::CmdModeCont)
         }
-    }
-
-    // Validate input.
-    pub fn val_input(ncr: &NcReceived) -> bool {
-        match ncr {
-            NcReceived::Char(_) => true,
-            NcReceived::Event(NcKey::Left) => true,
-            NcReceived::Event(NcKey::Right) => true,
-            NcReceived::Event(NcKey::Enter) => true,
-            NcReceived::Event(NcKey::Backspace) => true,
-            _ => false
-        }
+        return log_err_ret!(Err(anyhow!("Unable to input to command palette: {:?}", ncin)))
     }
 
     // Get contents of command palette.
@@ -74,22 +56,31 @@ impl<'a> CmdPalette<'a> {
 
     // Destroy reader nc widget. Required for graceful termination of application.
     pub fn destroy_reader(&mut self) {
-        debug!("Destroying CmdPalette.");
         unsafe { ncreader_destroy(self.reader, std::ptr::null::<*mut *mut i8>() as *mut *mut i8) }
     }
 
 }
 
+// Validate input for command palette.
+pub fn cmd_plt_val_input(ncr: &NcReceived) -> bool {
+    match ncr {
+        NcReceived::Char(_) => true,
+        NcReceived::Event(NcKey::Left) => true,
+        NcReceived::Event(NcKey::Right) => true,
+        NcReceived::Event(NcKey::Enter) => true,
+        NcReceived::Event(NcKey::Backspace) => true,
+        _ => false
+    }
+}
+
 impl<'a> Widget for CmdPalette<'a> {
-    fn new(tui_prefs: &TuiPrefs,
+    fn new(_: &TuiPrefs,
             parent_plane: &mut NcPlane,
             x: i32,
             y: i32,
             dim_x: u32,
-            dim_y: u32,
-            mpsc_send: Sender<Message>
+            dim_y: u32
           ) -> Result<Self> {
-        debug!("Creating new command palette.");
 
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
@@ -116,12 +107,11 @@ impl<'a> Widget for CmdPalette<'a> {
 
         Ok(Self {
             plane,
-            reader,
-            mpsc_send
+            reader
         })
     }
 
-    fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
+    fn draw(&mut self, _tui_prefs: &TuiPrefs) -> Result<()> {
         Ok(())
     }
 }

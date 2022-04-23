@@ -1,8 +1,7 @@
 pub mod key_bindings {
-    use anyhow::{ anyhow, bail, Result };
+    use anyhow::{ bail, Result };
     #[cfg(test)]
     use enum_iterator::IntoEnumIterator; // Required in a unit test.
-    use log::{ debug, info };
     use phf::{ phf_map, Map };
     use sequence_trie::SequenceTrie;
     use std::collections::HashMap;
@@ -132,6 +131,9 @@ pub mod key_bindings {
     };
 
 
+    #[cfg(test)]
+    use anyhow::anyhow;
+
     // For a unit test.
     #[cfg(test)]
     #[allow(unreachable_patterns)]
@@ -208,7 +210,6 @@ pub mod key_bindings {
     pub type KeyBindingsTrie = SequenceTrie<Key, String>;
 
     pub fn create_key_bindings_trie(kb: &HashMap<String, String>) -> Result<KeyBindingsTrie> {
-        debug!("Creating key-bindings trie.");
         let mut kb_trie: KeyBindingsTrie = KeyBindingsTrie::new();
         for (&key, &def_val) in DEFAULT_KEY_BINDINGS.entries() {
             if let Some(val) = kb.get(key) {

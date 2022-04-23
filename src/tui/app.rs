@@ -1,4 +1,4 @@
-use anyhow::{ anyhow, bail, Context, Result };
+use anyhow::{ anyhow, Context, Result };
 use libnotcurses_sys::{
     c_api::ncreader_offer_input,
     Nc,
@@ -7,25 +7,22 @@ use libnotcurses_sys::{
     NcPlane,
     NcPlaneOptions
 };
-use log::{ debug, error, info };
+use log::{ error, info };
 use std::sync::{ Arc, Mutex };
-use tokio::sync::oneshot;
-use tokio::sync::mpsc::Sender;
 
 use crate::{ 
-        input::{
-            input_message::InputMessage,
-            command_to_event
-        },
-        state::Message,
-        tools::{ handle_err, log_err }, tui::TuiPrefs 
+        input::command_to_event,
+        tools::{ log_err_desc_ret, log_err_ret }, 
+        tui::{ AppRes, TuiPrefs }
 };
 use super::subreddit_listing_page::SubListPage;
-use super::{CmdPalette,
-                page::{ Page, PageType },
-                subreddit_listing_page::SubListPostData,
-                util::new_child_plane,
-                Widget };
+use super::{ 
+        command_palette::CmdPalette,
+        page::{ Page, PageType },
+        subreddit_listing_page::SubListPostData,
+        util::new_child_plane,
+        util::Widget 
+};
 
 // -----------------------------------------------------------------------------------------------------------
 // * Primary base App.
@@ -39,9 +36,6 @@ pub struct App<'a> {
         plane: &'a mut NcPlane,
         tui_prefs: TuiPrefs,
 
-        // For sending messages to trigger events.
-        mpsc_send: Sender<Message>,
-
         // Pages currently in the application.
         pub pages: Vec<Box<dyn Page + 'a>>,
 
@@ -50,7 +44,7 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs, mpsc_send: Sender<Message>) 
+    pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs) 
             -> Result<App<'b>> {
         let mut nc_lock = nc.lock().unwrap();
         let stdplane = unsafe { nc_lock.stdplane() }; 
@@ -58,22 +52,19 @@ impl<'a> App<'a> {
 
         if tui_prefs.interface.mouse_events_enable { 
             info!("Enabling mice events.");
-            handle_err!(nc_lock.mice_enable(NcMiceEvents::All), "Failed to enable mice events")?;
+            log_err_desc_ret!(nc_lock.mice_enable(NcMiceEvents::All), "Failed to enable mice events")?;
         }
-
         drop(nc_lock);
 
         let app_plane = new_child_plane!(stdplane, 0, 0, dim_x, dim_y);
 
-        debug!("Creating command palette.");
-        let cmd_plt = log_err!(
+        let cmd_plt = log_err_ret!(
             CmdPalette::new(&tui_prefs,
                               app_plane,
                               0,
                               (stdplane.dim_y() - 1) as i32,
                               stdplane.dim_x(),
-                              1,
-                              mpsc_send.clone()
+                              1
                               )
         )?;
 
@@ -82,8 +73,6 @@ impl<'a> App<'a> {
                 nc,
                 plane: app_plane,
                 tui_prefs,
-
-                mpsc_send,
 
                 pages: Vec::new(),
 
@@ -97,13 +86,12 @@ impl<'a> App<'a> {
         info!("Adding new page of type {:?}.", page_type);
         match page_type {
             PageType::SubredditListing => {
-                let mut sub_list_page = log_err!(SubListPage::new(&self.tui_prefs,
+                let mut sub_list_page = log_err_ret!(SubListPage::new(&self.tui_prefs,
                                                             self.plane,
                                                             0,
                                                             0,
                                                             self.plane.dim_x(),
                                                             self.plane.dim_y(),
-                                                            self.mpsc_send.clone()
                                                             ))?;
 
                 // DEV
@@ -126,44 +114,41 @@ impl<'a> App<'a> {
     }
 
     // TODO: Find better ways of ordering planes as layers in App.
-    pub async fn input_cmd_plt(&mut self, ncin: NcInput, oneshot_tx: oneshot::Sender<InputMessage>) -> Result<()> {
-        log_err!(self.cmd_plt.input(ncin, oneshot_tx).await)?;
-        // command_to_event::exec_cmd(None, cmd).await;
-        self.render()
+    pub fn input_cmd_plt(&mut self, ncin: NcInput) -> Result<AppRes> {
+        let res = log_err_ret!(self.cmd_plt.input(ncin))?;
+        self.render()?;
+        Ok(res)
     }
 
     pub fn enter_cmd(&mut self) -> Result<()> {
-        debug!("Entering CmdMode.");
         // Put : in CmdPalette
         unsafe { ncreader_offer_input(self.cmd_plt.reader, &NcInput::new(':')) };
         self.render()
     }
 
     pub fn exit_cmd(&mut self) -> Result<()> {
-        debug!("Exiting CmdMode.");
         self.cmd_plt.clear_contents();
         self.render()
     }
 
-    pub async fn exec_cmd(&mut self) -> Result<()> {
-        debug!("Executing command: {:?}", self.cmd_plt.contents()?);
-        let mut cmd = self.cmd_plt.contents()?;
-        command_to_event::exec_cmd(self.mpsc_send.clone(), None, &cmd.split_off(1)).await;
-        Ok(())
+    // Execute command typed in command palette.
+    pub fn exec_cmd(&mut self) -> Result<()> {
+        let cmd = log_err_ret!(self.cmd_plt.contents())?;
+        command_to_event::exec_cmd(self, &cmd)
     }
 
     // Render TUI.
     pub fn render(&mut self) -> Result<()> {
         for page in self.pages.iter_mut() {
-            handle_err!(page.draw(&self.tui_prefs), "Failed to render page")?;
+            log_err_desc_ret!(page.draw(&self.tui_prefs), "Failed to render page")?;
         }
 
         if let Ok(mut nc_lock) = self.nc.lock() {
-            handle_err!(nc_lock.render(), "Failed to render app")?;
+            log_err_desc_ret!(nc_lock.render(), "Failed to render app")?;
             return Ok(())
+        } else {
+            return log_err_ret!(Err(anyhow!("Failed to render App: unable to lock Nc.")))
         }
-        error!("Failed to render app: unable to lock Nc.");
-        bail!("Failed to render app: unable to lock Nc.")
     }
 }
 
@@ -174,16 +159,15 @@ impl<'a> App<'a> {
 // -----------------------------------------------------------------------------------------------------------
 impl<'a> Drop for App<'a> {
     fn drop(&mut self) {
-        debug!("Dropping App.");
 
         // Destroy ncreader before destroying base plane or Nc instance.
         self.cmd_plt.destroy_reader();
 
-        handle_err!(self.plane.destroy(), "Failed to destroy app plane").unwrap();
+        log_err_desc_ret!(self.plane.destroy(), "Failed to destroy app plane").unwrap();
 
         if let Ok(mut nc_lock) = self.nc.lock() {
             unsafe { 
-                handle_err!(nc_lock.stop(), "Failed to destroy Nc instance").unwrap()
+                log_err_desc_ret!(nc_lock.stop(), "Failed to destroy Nc instance").unwrap()
             }
         } else { error!("Error locking Nc instance while dropping App."); }
     }
