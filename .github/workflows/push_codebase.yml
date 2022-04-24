@@ -78,11 +78,6 @@ jobs:
         output_file: "docs/repo_visualize.svg"
         repo-token: ${{ secrets.GITHUB_TOKEN }}
     - uses: actions/checkout@v2
-    - name: TODO to Issue
-      uses: ribtoks/tdg-github-action@master
-      with:
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        REPO: ${{ github.repository }}
-        SHA: ${{ github.sha }}
-        REF: ${{ github.ref }}
-      id: todo
+    - name: "TODO to Issue"
+      uses: "alstr/todo-to-issue-action@v4.6.3"
+      id: "todo"
