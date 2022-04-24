@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::{
     def::commands::*,
-    tui::App
+    tui::{ App, AppRes }
 };
 
 
@@ -13,7 +13,7 @@ use crate::{
 // * Trigger corresponding events.
 // -----------------------------------------------------------------------------------------------------------
 pub fn exec_cmd(_app: &mut App,
-                      cmd: &str) -> Result<()> {
+                      cmd: &str) -> Result<Option<AppRes>> {
     let args: Vec<&str> = cmd.split(" ").collect();
 
     match args[0] {
@@ -23,10 +23,10 @@ pub fn exec_cmd(_app: &mut App,
             // } else {
             //     error!("Oneshot sender needed, provided None.");
             // }
+            Ok(Some(AppRes::AppQuit))
         },
         _ => { 
-
+            Ok(None)
         }
     }
-    Ok(())
 }
