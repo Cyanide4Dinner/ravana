@@ -132,11 +132,11 @@ impl<'a> App<'a> {
     }
 
     // Execute command typed in command palette.
-    pub fn exec_cmd(&mut self) -> Result<()> {
+    pub fn exec_cmd(&mut self) -> Result<Option<AppRes>> {
         let cmd = log_err_ret!(self.cmd_plt.contents())?;
         self.cmd_plt.clear_contents();
         self.render()?;
-        command_to_event::exec_cmd(self, &cmd)
+        command_to_event::exec_cmd(self, &cmd[1..cmd.len()]) // Ignore first char which is ':'
     }
 
     // Render TUI.

@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------------------------------------
 #[derive(Debug)]
 pub enum AppRes {
+    AppQuit,
     CmdModeCont,
-    CmdModeQuit
+    CmdModeQuit,
 }
