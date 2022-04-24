@@ -134,6 +134,8 @@ impl<'a> App<'a> {
     // Execute command typed in command palette.
     pub fn exec_cmd(&mut self) -> Result<()> {
         let cmd = log_err_ret!(self.cmd_plt.contents())?;
+        self.cmd_plt.clear_contents();
+        self.render()?;
         command_to_event::exec_cmd(self, &cmd)
     }
 
