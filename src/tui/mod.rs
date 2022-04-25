@@ -8,5 +8,6 @@ pub(super) mod util;
 
 pub use app::App;
 pub use app_response::AppRes;
+pub use page::PageType;
 pub use command_palette::cmd_plt_val_input;
 pub use util::{ TuiPrefs, val_tui_prefs_des };

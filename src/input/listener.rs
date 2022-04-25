@@ -6,7 +6,7 @@ use libnotcurses_sys::{
     NcKey,
     NcReceived,
 }; 
-use log::{ debug, error, warn };
+use log::{ error, warn };
 use nix::poll::{ poll, PollFd, PollFlags };
 use std::sync::{ Arc, Mutex };
 
@@ -28,7 +28,6 @@ use super::{
 // * Return event.
 // -----------------------------------------------------------------------------------------------------------
 pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> Result<()> {
-    debug!("Begin input listening loop.");
     let mut buffer: KeyCombination = KeyCombination::new();
     let mut input_details = NcInput::new_empty();
 
@@ -54,7 +53,6 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
                 match recorded_input {
                     // Execute command.
                     NcReceived::Event(NcKey::Enter) => {
-                        debug!("Preparing to execute command.");
                         cmd_mode = false;
                         match app.exec_cmd() {
                             Ok(Some(AppRes::AppQuit)) => { break; },
@@ -66,7 +64,6 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
 
                     // Escape command mode.
                     NcReceived::Event(NcKey::Esc) => {
-                        debug!("Switching CmdMode false.");
                         cmd_mode = false;
                         log_err_desc!(app.exit_cmd(), "Unable to exit command palette");
                         continue;
@@ -99,7 +96,6 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
             // -----------------------------------------------------------------------------------------------
             else {
                 if let NcReceived::Char(':') = recorded_input {
-                    debug!("Switching to CmdMode true.");
                     cmd_mode = true;
                     log_err_desc!(app.enter_cmd(), "Unable to enter command palette");
                     buffer.clear();
@@ -206,7 +202,6 @@ fn gen_key(ncr: &NcReceived, id: &NcInput) -> Option<KeyCombination> {
                 &NcKey::PgUp => { key_comb_vec.push(Key::KeyPageUp); },
                 &NcKey::PgDown => { key_comb_vec.push(Key::KeyPageDown); },
                 _ => { 
-                    debug!("User input: {:?} {:?}", ncr, id);
                     warn!("Found no key matching for event."); return None;
                 }
             }

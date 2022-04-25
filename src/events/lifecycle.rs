@@ -33,7 +33,8 @@ pub fn ravana() -> Result<()> {
             "Failed to generate TUI prefs"
         )?
     )?;
-    app.add_page(PageType::SubredditListing).unwrap();
+    // TODO: Remove
+    app.dummy_render()?;
     app.render().unwrap();
 
     let kbt = log_err_desc_ret!(create_key_bindings_trie(&config.key_bindings), "Failed to create KB trie")?;
