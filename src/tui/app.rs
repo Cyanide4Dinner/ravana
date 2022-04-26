@@ -1,4 +1,4 @@
-use anyhow::{ anyhow, Context, Result };
+use anyhow::{ anyhow, bail, Context, Result };
 use libnotcurses_sys::{
     c_api::ncreader_offer_input,
     Nc,
