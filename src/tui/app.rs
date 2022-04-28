@@ -1,4 +1,4 @@
-use anyhow::{ anyhow, Context, Result };
+use anyhow::{ anyhow, bail, Context, Result };
 use libnotcurses_sys::{
     c_api::ncreader_offer_input,
     Nc,
@@ -40,7 +40,7 @@ pub struct App<'a> {
         pub pages: Vec<Box<dyn Page + 'a>>,
 
         // Command palette widget.
-        cmd_plt: CmdPalette<'a>
+        pub cmd_plt: CmdPalette<'a>
 }
 
 impl<'a> App<'a> {
@@ -86,30 +86,57 @@ impl<'a> App<'a> {
         info!("Adding new page of type {:?}.", page_type);
         match page_type {
             PageType::SubredditListing => {
-                let mut sub_list_page = log_err_ret!(SubListPage::new(&self.tui_prefs,
-                                                            self.plane,
-                                                            0,
-                                                            0,
-                                                            self.plane.dim_x(),
-                                                            self.plane.dim_y(),
-                                                            ))?;
-
-                // DEV
-                sub_list_page.add_post(&self.tui_prefs, SubListPostData {
-                    heading: "hadfafda",
-                    content: "fahfaljdf",
-                    upvotes: 78,
-                    username: "afhaldjf",
-                    subreddit_name: "rust",
-                    comments: 78
-                }).context("Failed to create new page of type SubredditListing.")?;
-                self.pages.push(Box::new(sub_list_page));
-
-                // DEV
-                // TODO: Find ways to move cmd_plt to top automatically.
-                self.cmd_plt.plane.move_top();
+                // let mut sub_list_page = log_err_ret!(SubListPage::new(&self.tui_prefs,
+                //                                             self.plane,
+                //                                             0,
+                //                                             0,
+                //                                             self.plane.dim_x(),
+                //                                             self.plane.dim_y(),
+                //                                             ))?;
+                //
+                // // DEV
+                // sub_list_page.add_post(&self.tui_prefs, SubListPostData {
+                //     heading: "hadfafda",
+                //     content: "fahfaljdf",
+                //     upvotes: 78,
+                //     username: "afhaldjf",
+                //     subreddit_name: "rust",
+                //     comments: 78
+                // }).context("Failed to create new page of type SubredditListing.")?;
+                // self.pages.push(Box::new(sub_list_page));
+                //
+                // // DEV
+                // // TODO: Find ways to move cmd_plt to top automatically.
+                // self.cmd_plt.plane.move_top();
             }
         }
+        Ok(())
+    }
+
+    // TODO: Remove (simply for dev process)
+    pub fn dummy_render(&mut self) -> Result<()> {
+        let mut sub_list_page = log_err_ret!(SubListPage::new(&self.tui_prefs,
+                                                    self.plane,
+                                                    0,
+                                                    0,
+                                                    self.plane.dim_x(),
+                                                    self.plane.dim_y(),
+                                                    ))?;
+
+        // DEV
+        sub_list_page.add_post(&self.tui_prefs, SubListPostData {
+            heading: "hadfafda",
+            content: "fahfaljdf",
+            upvotes: 78,
+            username: "afhaldjf",
+            subreddit_name: "rust",
+            comments: 78
+        }).context("Failed to create new page of type SubredditListing.")?;
+        self.pages.push(Box::new(sub_list_page));
+
+        // DEV
+        // TODO: Find ways to move cmd_plt to top automatically.
+        self.cmd_plt.plane.move_top();
         Ok(())
     }
 
