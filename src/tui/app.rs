@@ -40,7 +40,7 @@ pub struct App<'a> {
         pub pages: Vec<Box<dyn Page + 'a>>,
 
         // Command palette widget.
-        cmd_plt: CmdPalette<'a>
+        pub cmd_plt: CmdPalette<'a>
 }
 
 impl<'a> App<'a> {
