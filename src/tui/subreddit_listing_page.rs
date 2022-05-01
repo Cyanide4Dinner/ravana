@@ -97,23 +97,16 @@ impl<'a> Widget for SubListPost<'a> {
                    ) -> Result<Self> {
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
-        let fg_color: Color = Color {
-            r: 0,
-            g: 0,
-            b: 0
-        };
-        let bg_color: Color = Color {
-            r: 240,
-            g: 0,
-            b: 255
-        };
         let body_plane = new_child_plane!(parent_plane, 0, 2, dim_x, 3);
-        body_plane.set_base(" ", 0, NcChannels::combine(
-                NcChannel::from_rgb(fg_color.to_nc_rgb()),
-                NcChannel::from_rgb(bg_color.to_nc_rgb())
-                ))?;
-        body_plane.set_fg_rgb(fg_color.to_nc_rgb());
-        body_plane.set_bg_rgb(bg_color.to_nc_rgb());
+        body_plane.set_base(
+            " ",
+            0,
+            NcChannels::from_rgb(
+                tui_prefs.theme.post_body_fg.to_nc_rgb(),
+                tui_prefs.theme.post_body_bg.to_nc_rgb()
+            ))?;
+        body_plane.set_fg_rgb(tui_prefs.theme.post_body_fg.to_nc_rgb());
+        body_plane.set_bg_rgb(tui_prefs.theme.post_body_bg.to_nc_rgb());
 
 
         let hdr_plane = new_child_plane!(parent_plane, 0, 0, dim_x, 1);
