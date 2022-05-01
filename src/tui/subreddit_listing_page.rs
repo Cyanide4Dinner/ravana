@@ -1,15 +1,16 @@
 use anyhow::Result;
 use libnotcurses_sys::{
+    NcAlign,
     NcChannel,
     NcChannels,
     NcPlane,
     NcPlaneOptions,
-    c_api
+    NcStyle
 };
 use log::error;
 
-use crate::tools::{ log_err_desc_ret };
-use super::{ page::Page, TuiPrefs, util::{ new_child_plane, Widget } };
+use crate::tools::log_err_desc_ret;
+use super::{ page::Page, TuiPrefs, util::{ Color, new_child_plane, Widget } };
 
 // Data to display in a post item of subreddit listing.
 pub struct SubListPostData<'a> {
@@ -18,63 +19,47 @@ pub struct SubListPostData<'a> {
     pub content: &'a str,
     pub username: &'a str,
     pub subreddit_name: &'a str,
-    pub comments: u32
+    pub comments: u32,
+    pub body: &'a str
 }
 
 // Subreddit lisitng post item widget.
 pub struct SubListPost<'a> {
     plane: &'a mut NcPlane,
-    data: SubListPostData<'a>
+
+    data: SubListPostData<'a>,
+
+    hdr_plane:  &'a mut NcPlane,
+    hdg_plane:  &'a mut NcPlane,
+    body_plane: &'a mut NcPlane
 }
 
 impl<'a> SubListPost<'a> {
     fn draw_header(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
-        // Header channels
-        let header_bg_channel = NcChannel::from_rgb(tui_prefs.theme.post_header_bg.to_nc_rgb());
-        let header_fg_channel = NcChannel::from_rgb(tui_prefs.theme.post_header_fg.to_nc_rgb());
-
         let upvoted_channel = NcChannels::from_rgb(
             tui_prefs.theme.post_upvoted_fg.to_nc_rgb(),
             tui_prefs.theme.post_upvoted_bg.to_nc_rgb()
         );
 
-        let header_combined_channel = NcChannels::combine(header_fg_channel, header_bg_channel);
-
         const UPVOTE_COUNT_DECIMAL_PRECISION: u32 = 7;
         const MAX_USERNAME_LEN: u32 = 16;
         const COMMENT_COUNT_DECIMAL_PRECISION: u32 = 8;
 
-        // Fill space as character to get color on whole line.
-        // TODO: Find efficient methods, use notcurses built in tools.
-        self.plane.putstr_yx_stained(0, 0, &(0..self.plane.dim_x()).map(|_| " ").collect::<String>())?;
-
         let mut pos = 0;
-        self.plane.putstr_yx(Some(0), Some(pos), &self.data.upvotes.to_string())?;
+        self.hdr_plane.putstr_yx_stained(0, pos, &self.data.upvotes.to_string())?;
 
         pos = UPVOTE_COUNT_DECIMAL_PRECISION + 1;
-        self.plane.putstr_yx_stained(0, pos, &self.data.username)?;
+        self.hdr_plane.putstr_yx(Some(0), Some(pos), &self.data.username)?;
 
         pos = pos + MAX_USERNAME_LEN + 1;
-        self.plane.putstr_yx_stained(0, pos, &self.data.subreddit_name)?;
+        self.hdr_plane.putstr_yx(Some(0), Some(pos), &self.data.subreddit_name)?;
 
         pos = self.plane.dim_x() - COMMENT_COUNT_DECIMAL_PRECISION + 1;
-        self.plane.putstr_yx_stained(0, pos, &self.data.comments.to_string())?;
+        self.hdr_plane.putstr_yx(Some(0), Some(pos), &self.data.comments.to_string())?;
 
-        self.plane.stain(
-            Some(0),
-            Some(0),
-            Some(1),
-            None,
-            header_combined_channel,
-            header_combined_channel,
-            header_combined_channel,
-            header_combined_channel,
-        )?;
-
-        // If upvoted, indicate by different color.
         let upvoted = true;
         if upvoted {
-            self.plane.stain(
+            self.hdr_plane.stain(
                 Some(0),
                 Some(0),
                 Some(1),
@@ -85,39 +70,25 @@ impl<'a> SubListPost<'a> {
                 upvoted_channel,
             )?;
         }
+
         Ok(())
     }
 
-    fn draw_heading(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
-        let heading_bg_channel = NcChannel::from_rgb(tui_prefs.theme.post_heading_bg.to_nc_rgb());
-        let heading_fg_channel = NcChannel::from_rgb(tui_prefs.theme.post_heading_fg.to_nc_rgb());
+    // TODO: Safeguard against text overflow since the App crashes.
+    fn draw_heading(&mut self) -> Result<()> {
+        self.hdg_plane.puttext(0, NcAlign::Left, self.data.heading)?;
+        Ok(())
+    }
 
-        let heading_combined_channel = NcChannels::combine(heading_fg_channel, heading_bg_channel);
-
-        // Fill space as character to get color on whole line.
-        // TODO: Find efficient methods, use notcurses built in tools.
-        self.plane.putstr_yx_stained(1, 0, &(0..self.plane.dim_x()).map(|_| " ").collect::<String>())?;
-
-        self.plane.putnstr_yx(Some(1), Some(0), self.plane.dim_x() as usize, self.data.heading)?;
-        self.plane.stain(
-            Some(1),
-            Some(0),
-            Some(1),
-            None,
-            heading_combined_channel,
-            heading_combined_channel,
-            heading_combined_channel,
-            heading_combined_channel,
-        )?;
-
-        // Make heading bold formatted.
-        self.plane.format(Some(1), Some(0), Some(1), None, c_api::NCSTYLE_BOLD)?;
+    // TODO: Safeguard against text overflow since the App crashes.
+    fn draw_body(&mut self) -> Result<()> {
+        self.body_plane.puttext(0, NcAlign::Left, self.data.body)?;
         Ok(())
     }
 }
 
 impl<'a> Widget for SubListPost<'a> {
-    fn new(_tui_prefs: &TuiPrefs,
+    fn new(tui_prefs: &TuiPrefs,
                     parent_plane: &mut NcPlane,
                     x: i32,
                     y: i32,
@@ -126,22 +97,73 @@ impl<'a> Widget for SubListPost<'a> {
                    ) -> Result<Self> {
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
+        let fg_color: Color = Color {
+            r: 0,
+            g: 0,
+            b: 0
+        };
+        let bg_color: Color = Color {
+            r: 240,
+            g: 0,
+            b: 255
+        };
+        let body_plane = new_child_plane!(parent_plane, 0, 2, dim_x, 3);
+        body_plane.set_base(" ", 0, NcChannels::combine(
+                NcChannel::from_rgb(fg_color.to_nc_rgb()),
+                NcChannel::from_rgb(bg_color.to_nc_rgb())
+                ))?;
+        body_plane.set_fg_rgb(fg_color.to_nc_rgb());
+        body_plane.set_bg_rgb(bg_color.to_nc_rgb());
+
+
+        let hdr_plane = new_child_plane!(parent_plane, 0, 0, dim_x, 1);
+        hdr_plane.set_base(
+            " ",
+            0,
+            NcChannels::from_rgb(
+                tui_prefs.theme.post_header_fg.to_nc_rgb(),
+                tui_prefs.theme.post_header_bg.to_nc_rgb()
+            ))?;
+        hdr_plane.set_fg_rgb(tui_prefs.theme.post_header_fg.to_nc_rgb());
+        hdr_plane.set_bg_rgb(tui_prefs.theme.post_header_bg.to_nc_rgb());
+
+        let hdg_plane = new_child_plane!(parent_plane, 0, 1, dim_x, 1);
+        hdg_plane.set_base(
+            " ",
+            0,
+            NcChannels::from_rgb(
+                tui_prefs.theme.post_heading_fg.to_nc_rgb(),
+                tui_prefs.theme.post_heading_bg.to_nc_rgb()
+            )
+        )?;
+        hdg_plane.set_styles(NcStyle::Bold);
+        hdg_plane.set_fg_rgb(tui_prefs.theme.post_heading_fg.to_nc_rgb());
+        hdg_plane.set_bg_rgb(tui_prefs.theme.post_heading_bg.to_nc_rgb());
+
         Ok(Self {
                 plane,
+
                 data: SubListPostData {
-                    heading: "Heading 1",
+                    heading: "Heading",
                     content: "",
                     upvotes: 18901,
                     username: "AyeDeeKay",
                     subreddit_name: "Rust",
-                    comments: 17
-                }
+                    comments: 17,
+                    body: "akjfldajf lajdfl jadlf jald fjla jdfla jjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdfd"
+                },
+
+                hdr_plane,
+                hdg_plane,
+                body_plane
+
         })
     }
 
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
-        log_err_desc_ret!(self.draw_header(tui_prefs), "Failed to draw header")?;
-        log_err_desc_ret!(self.draw_heading(tui_prefs), "Failed to draw heading")
+        log_err_desc_ret!(self.draw_header(tui_prefs), "Failed to draw header.")?;
+        log_err_desc_ret!(self.draw_heading(), "Failed to draw heading.")?;
+        log_err_desc_ret!(self.draw_body(), "Failed to draw body.")
     }
 }
 

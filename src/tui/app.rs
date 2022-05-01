@@ -120,7 +120,7 @@ impl<'a> App<'a> {
                                                     0,
                                                     0,
                                                     self.plane.dim_x(),
-                                                    self.plane.dim_y(),
+                                                    5
                                                     ))?;
 
         // DEV
@@ -130,7 +130,8 @@ impl<'a> App<'a> {
             upvotes: 78,
             username: "afhaldjf",
             subreddit_name: "rust",
-            comments: 78
+            comments: 78,
+            body: "jfkladjfl ajdfla jdflkj"
         }).context("Failed to create new page of type SubredditListing.")?;
         self.pages.push(Box::new(sub_list_page));
 
