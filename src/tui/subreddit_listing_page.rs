@@ -35,6 +35,10 @@ pub struct SubListPost<'a> {
 }
 
 impl<'a> SubListPost<'a> {
+    fn set_contents(&mut self, data: SubListPostData<'a>) {
+        self.data = data;
+    }
+
     fn draw_header(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
         let upvoted_channel = NcChannels::from_rgb(
             tui_prefs.theme.post_upvoted_fg.to_nc_rgb(),
@@ -76,12 +80,14 @@ impl<'a> SubListPost<'a> {
 
     // TODO: Safeguard against text overflow since the App crashes.
     fn draw_heading(&mut self) -> Result<()> {
+        self.hdg_plane.erase();
         self.hdg_plane.puttext(0, NcAlign::Left, self.data.heading)?;
         Ok(())
     }
 
     // TODO: Safeguard against text overflow since the App crashes.
     fn draw_body(&mut self) -> Result<()> {
+        self.body_plane.erase();
         self.body_plane.puttext(0, NcAlign::Left, self.data.body)?;
         Ok(())
     }
@@ -97,7 +103,7 @@ impl<'a> Widget for SubListPost<'a> {
                    ) -> Result<Self> {
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
 
-        let body_plane = new_child_plane!(parent_plane, 0, 2, dim_x, 3);
+        let body_plane = new_child_plane!(plane, 0, 2, dim_x, 3);
         body_plane.set_base(
             " ",
             0,
@@ -109,7 +115,7 @@ impl<'a> Widget for SubListPost<'a> {
         body_plane.set_bg_rgb(tui_prefs.theme.post_body_bg.to_nc_rgb());
 
 
-        let hdr_plane = new_child_plane!(parent_plane, 0, 0, dim_x, 1);
+        let hdr_plane = new_child_plane!(plane, 0, 0, dim_x, 1);
         hdr_plane.set_base(
             " ",
             0,
@@ -120,7 +126,7 @@ impl<'a> Widget for SubListPost<'a> {
         hdr_plane.set_fg_rgb(tui_prefs.theme.post_header_fg.to_nc_rgb());
         hdr_plane.set_bg_rgb(tui_prefs.theme.post_header_bg.to_nc_rgb());
 
-        let hdg_plane = new_child_plane!(parent_plane, 0, 1, dim_x, 1);
+        let hdg_plane = new_child_plane!(plane, 0, 1, dim_x, 1);
         hdg_plane.set_base(
             " ",
             0,
@@ -137,13 +143,13 @@ impl<'a> Widget for SubListPost<'a> {
                 plane,
 
                 data: SubListPostData {
-                    heading: "Heading",
+                    heading: "",
                     content: "",
-                    upvotes: 18901,
-                    username: "AyeDeeKay",
-                    subreddit_name: "Rust",
-                    comments: 17,
-                    body: "akjfldajf lajdfl jadlf jald fjla jdfla jjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdjadlf jald fjla jdfla jfdfd"
+                    upvotes: 0,
+                    username: "",
+                    subreddit_name: "",
+                    comments: 0,
+                    body: ""
                 },
 
                 hdr_plane,
@@ -169,15 +175,17 @@ pub struct SubListPage<'a> {
 }
 
 impl<'a> SubListPage<'a> {
-    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, _data: SubListPostData<'a>) -> Result<()> {
-        self.posts.push(SubListPost::new(
+    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, data: SubListPostData<'a>) -> Result<()> {
+        let mut post = SubListPost::new(
                 tui_prefs,
                 self.plane,
                 0,
-                0,
+                (self.posts.len() * 5) as i32,
                 self.plane.dim_x(),
                 self.plane.dim_y(),
-            )?);
+            )?;
+        post.set_contents(data);
+        self.posts.push(post);
         Ok(())
     }
 }

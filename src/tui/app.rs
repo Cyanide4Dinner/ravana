@@ -120,7 +120,7 @@ impl<'a> App<'a> {
                                                     0,
                                                     0,
                                                     self.plane.dim_x(),
-                                                    5
+                                                    self.plane.dim_y() - 1
                                                     ))?;
 
         // DEV
@@ -133,6 +133,7 @@ impl<'a> App<'a> {
             comments: 78,
             body: "jfkladjfl ajdfla jdflkj"
         }).context("Failed to create new page of type SubredditListing.")?;
+
         self.pages.push(Box::new(sub_list_page));
 
         // DEV
