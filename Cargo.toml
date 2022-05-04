@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 # libnotcurses-sys = { git = "https://github.com/dankamongmen/libnotcurses-sys" }
-libnotcurses-sys = "= 3.3.0"
+libnotcurses-sys = "3.5.0"
 reqwest = { version = "0.11", default-features = false, features = [
 "rustls-tls",
 "json"
