@@ -170,7 +170,7 @@ impl<'a> Widget for SubListPost<'a> {
 // Page for displaying subreddit listing.
 // -----------------------------------------------------------------------------------------------------------
 pub struct SubListPage<'a> {
-    plane: &'a mut NcPlane,
+    pub plane: &'a mut NcPlane,
     posts: Vec<SubListPost<'a>>,
 }
 

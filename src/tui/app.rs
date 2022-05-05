@@ -62,8 +62,8 @@ impl<'a> App<'a> {
             CmdPalette::new(&tui_prefs,
                               app_plane,
                               0,
-                              (stdplane.dim_y() - 1) as i32,
-                              stdplane.dim_x(),
+                              (app_plane.dim_y() - 1) as i32,
+                              app_plane.dim_x(),
                               1
                               )
         )?;
@@ -124,15 +124,20 @@ impl<'a> App<'a> {
                                                     ))?;
 
         // DEV
-        sub_list_page.add_post(&self.tui_prefs, SubListPostData {
-            heading: "hadfafda",
-            content: "fahfaljdf",
-            upvotes: 78,
-            username: "afhaldjf",
-            subreddit_name: "rust",
-            comments: 78,
-            body: "jfkladjfl ajdfla jdflkj"
-        }).context("Failed to create new page of type SubredditListing.")?;
+        
+        for _ in 0..20 {
+            sub_list_page.add_post(&self.tui_prefs, SubListPostData {
+                heading: "hadfafda",
+                content: "fahfaljdf",
+                upvotes: 78,
+                username: "afhaldjf",
+                subreddit_name: "rust",
+                comments: 78,
+                body: "jfkladjfl ajdfla jdflkj"
+            }).context("Failed to create new page of type SubredditListing.")?;
+        }
+
+        sub_list_page.plane.move_rel(-5, 0)?;
 
         self.pages.push(Box::new(sub_list_page));
 
