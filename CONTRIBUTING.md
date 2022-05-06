@@ -7,3 +7,7 @@
 - Fix tests in jobs/config.rs.
 - Add relevant fields to TuiPrefs and fix impl TuiPrefs in tui/util.rs (if applicable).
 - Add validation in val_tui_prefs_des in tui/util.rs (if applicable).
+
+## Add new command
+- Add command string in def/commands.rs.
+- Handle it in exec_cmd() of input/command_to_event.rs.

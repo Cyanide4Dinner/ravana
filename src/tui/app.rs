@@ -1,4 +1,4 @@
-use anyhow::{ anyhow, bail, Context, Result };
+use anyhow::{ anyhow,  Context, Result };
 use libnotcurses_sys::{
     c_api::ncreader_offer_input,
     Nc,
@@ -21,7 +21,7 @@ use super::{
         page::{ Page, PageType },
         subreddit_listing_page::SubListPostData,
         util::new_child_plane,
-        util::Widget 
+        util::Widget,
 };
 
 // -----------------------------------------------------------------------------------------------------------
@@ -125,19 +125,20 @@ impl<'a> App<'a> {
 
         // DEV
         
-        for _ in 0..20 {
+        for x in 0..13 {
             sub_list_page.add_post(&self.tui_prefs, SubListPostData {
                 heading: "hadfafda",
                 content: "fahfaljdf",
-                upvotes: 78,
+                upvotes: x,
                 username: "afhaldjf",
                 subreddit_name: "rust",
                 comments: 78,
                 body: "jfkladjfl ajdfla jdflkj"
             }).context("Failed to create new page of type SubredditListing.")?;
         }
-
-        sub_list_page.plane.move_rel(-5, 0)?;
+        sub_list_page.scroll_down()?;
+        sub_list_page.scroll_up()?;
+        // sub_list_page.scroll_down()?;
 
         self.pages.push(Box::new(sub_list_page));
 
@@ -171,6 +172,18 @@ impl<'a> App<'a> {
         self.cmd_plt.clear_contents();
         self.render()?;
         command_to_event::exec_cmd(self, &cmd[1..cmd.len()]) // Ignore first char which is ':'
+    }
+
+    pub fn scroll_up(&mut self) { 
+        if let Err(e) = (*self.pages[0]).scroll_up() {
+            error!("{}", e);
+        }
+    }
+
+    pub fn scroll_down(&mut self) { 
+        if let Err(e) = (*self.pages[0]).scroll_down() {
+            error!("{}", e)
+        }
     }
 
     // Render TUI.

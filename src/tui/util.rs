@@ -223,6 +223,10 @@ pub trait Widget: Sized {
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()>;
 }
 
+pub trait Group {
+    fn move_rel_xy(&mut self, x_diff: i32, y_diff: i32) -> Result<()>;
+}
+
 macro_rules! new_child_plane {
     { $parent_plane: expr, $x: expr, $y: expr, $dim_x: expr, $dim_y: expr} => {
         NcPlane::new_child($parent_plane, &NcPlaneOptions::new($y, $x, $dim_y, $dim_x))?

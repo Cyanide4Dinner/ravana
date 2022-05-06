@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{ bail, Result };
 use libnotcurses_sys::{
     NcAlign,
     NcChannel,
@@ -10,7 +10,7 @@ use libnotcurses_sys::{
 use log::error;
 
 use crate::tools::log_err_desc_ret;
-use super::{ page::Page, TuiPrefs, util::{ Color, new_child_plane, Widget } };
+use super::{ page::Page, TuiPrefs, util::{ Group, new_child_plane, Widget } };
 
 // Data to display in a post item of subreddit listing.
 pub struct SubListPostData<'a> {
@@ -166,12 +166,25 @@ impl<'a> Widget for SubListPost<'a> {
     }
 }
 
+impl<'a> Group for SubListPost<'a> {
+    fn move_rel_xy(&mut self, x_diff: i32, y_diff: i32) -> Result<()> {
+        self.plane.move_rel(y_diff, x_diff)?;
+        self.hdr_plane.move_rel(y_diff, x_diff)?;
+        self.hdg_plane.move_rel(y_diff, x_diff)?;
+        self.body_plane.move_rel(y_diff, x_diff)?;
+        Ok(())
+    }
+}
+
 // -----------------------------------------------------------------------------------------------------------
 // Page for displaying subreddit listing.
 // -----------------------------------------------------------------------------------------------------------
 pub struct SubListPage<'a> {
     pub plane: &'a mut NcPlane,
     posts: Vec<SubListPost<'a>>,
+
+    scrolled: u32, // Lines scrolled down, 0 initially.
+    content_len: u32
 }
 
 impl<'a> SubListPage<'a> {
@@ -186,6 +199,7 @@ impl<'a> SubListPage<'a> {
             )?;
         post.set_contents(data);
         self.posts.push(post);
+        self.content_len += 5;
         Ok(())
     }
 }
@@ -206,6 +220,8 @@ impl<'a> Widget for SubListPage<'a> {
         Ok(Self { 
             plane,
             posts: vec![],
+            scrolled: 0,
+            content_len: 0
         })
     }
 
@@ -215,6 +231,22 @@ impl<'a> Widget for SubListPage<'a> {
 }
 
 impl Page for SubListPage<'_> {
+    fn scroll_down(&mut self) -> Result<()> {
+        if self.scrolled + self.plane.dim_y() >= self.content_len - 1 {
+            bail!("Bottom reached, cannot scroll down more.");
+        }
+        self.scrolled += 2;
+        self.move_rel_xy(0, -2)
+    }
+
+    fn scroll_up(&mut self) -> Result<()> {
+        if self.scrolled == 0 {
+            bail!("Top reached, cannot scroll up more.");
+        }
+        self.scrolled -= 2;
+        self.move_rel_xy(0, 2)
+    }
+
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
         for post in self.posts.iter_mut() {
             post.draw(tui_prefs)?;
@@ -223,6 +255,15 @@ impl Page for SubListPage<'_> {
     }
 
     fn fetch(&mut self) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl Group for SubListPage<'_> {
+    fn move_rel_xy(&mut self, x_diff: i32, y_diff: i32) -> Result<()> {
+        for post in self.posts.iter_mut() {
+            post.move_rel_xy(x_diff, y_diff)?;
+        }
         Ok(())
     }
 }
