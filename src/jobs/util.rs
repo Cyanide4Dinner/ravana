@@ -15,7 +15,11 @@ pub mod config {
         pub post_upvoted_fg: String,
         pub post_upvoted_bg: String,
         pub post_heading_fg: String,
-        pub post_heading_bg: String
+        pub post_heading_bg: String,
+        pub post_body_fg: String,
+        pub post_body_bg: String,
+        pub cmd_plt_fg: String,
+        pub cmd_plt_bg: String
     }
 
     // Interface deserialized.
@@ -66,7 +70,11 @@ pub mod config {
                         post_upvoted_fg: "#111111".to_string(),
                         post_upvoted_bg: "#111111".to_string(),
                         post_heading_fg: "#111111".to_string(),
-                        post_heading_bg: "#111111".to_string()
+                        post_heading_bg: "#111111".to_string(),
+                        post_body_fg: "#111111".to_string(),
+                        post_body_bg: "#111111".to_string(),
+                        cmd_plt_fg: "#111111".to_string(),
+                        cmd_plt_bg: "#111111".to_string(),
                     }
                 }
             }

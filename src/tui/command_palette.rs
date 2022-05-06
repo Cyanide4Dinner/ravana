@@ -13,7 +13,7 @@ use libnotcurses_sys::{
 };
 use std::ffi::CStr;
 
-use super::{ TuiPrefs, util::new_child_plane, util::Widget };
+use super::{ TuiPrefs, util::new_child_plane, util::{ Color, Widget }};
 use crate::tui::AppRes;
 use crate::tools::log_err_ret;
 
@@ -74,7 +74,7 @@ pub fn cmd_plt_val_input(ncr: &NcReceived) -> bool {
 }
 
 impl<'a> Widget for CmdPalette<'a> {
-    fn new(_: &TuiPrefs,
+    fn new(tui_prefs: &TuiPrefs,
             parent_plane: &mut NcPlane,
             x: i32,
             y: i32,
@@ -83,23 +83,25 @@ impl<'a> Widget for CmdPalette<'a> {
           ) -> Result<Self> {
 
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
-
-        let mut header_bg_channel = NcChannel::new();
-        header_bg_channel.set_r(100);
-        header_bg_channel.set_g(100);
-        header_bg_channel.set_b(100);
-        let mut header_fg_channel = NcChannel::new();
-        header_fg_channel.set_r(0);
-        header_fg_channel.set_g(200);
-        header_fg_channel.set_b(0);
-        let header_combined_channel = NcChannels::combine(header_fg_channel, header_bg_channel);
-
-        plane.set_channels(header_combined_channel);
+        plane.set_channels(NcChannels::from_rgb(
+                tui_prefs.theme.cmd_plt_fg.to_nc_rgb(),
+                tui_prefs.theme.cmd_plt_bg.to_nc_rgb()
+        ));
+        plane.set_base(
+            " ",
+            0,
+            NcChannels::from_rgb(
+                tui_prefs.theme.cmd_plt_fg.to_nc_rgb(),
+                tui_prefs.theme.cmd_plt_bg.to_nc_rgb(),
+            ))?;
 
         let reader = ncreader::with_options(
                 plane,
                 &NcReaderOptions {
-                    tchannels: header_combined_channel.0,
+                    tchannels: NcChannels::from_rgb(
+                        tui_prefs.theme.cmd_plt_fg.to_nc_rgb(),
+                        tui_prefs.theme.cmd_plt_bg.to_nc_rgb(),
+                    ).0,
                     tattrword: 0,
                     flags: (NcReaderOptions::CURSOR | NcReaderOptions::HORSCROLL) as u64
                 }

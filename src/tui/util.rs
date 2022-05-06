@@ -75,6 +75,30 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
             error!("Wrong color format for {} {} - {}", "theme", "post-heading-bg", theme.post_heading_bg);
         }
         res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.post_body_fg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post-body-fg", theme.post_body_fg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.post_body_bg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post-body-bg", theme.post_body_bg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.cmd_plt_fg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post-body-bg", theme.cmd_plt_fg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.cmd_plt_bg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "post-body-bg", theme.cmd_plt_bg);
+        }
+        res = res && temp_bool;
     }
 
     res
@@ -137,7 +161,11 @@ pub struct Theme {
     pub post_upvoted_fg: Color,
     pub post_upvoted_bg: Color,
     pub post_heading_fg: Color,
-    pub post_heading_bg: Color
+    pub post_heading_bg: Color,
+    pub post_body_fg: Color,
+    pub post_body_bg: Color,
+    pub cmd_plt_fg: Color,
+    pub cmd_plt_bg: Color
 }
 
 // TUI preferences.
@@ -169,7 +197,15 @@ impl TuiPrefs {
                     post_heading_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_heading_fg) 
                         { color } else { return Err(anyhow!("Invalid color format.")); },
                     post_heading_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_heading_bg) 
-                        { color } else { return Err(anyhow!("Invalid color format.")); }
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    post_body_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_body_fg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    post_body_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_body_bg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    cmd_plt_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.cmd_plt_fg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    cmd_plt_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.cmd_plt_bg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
                 }
             }
         )
@@ -185,6 +221,10 @@ pub trait Widget: Sized {
             dim_y: u32
             ) -> Result<Self>;
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()>;
+}
+
+pub trait Group {
+    fn move_rel_xy(&mut self, x_diff: i32, y_diff: i32) -> Result<()>;
 }
 
 macro_rules! new_child_plane {

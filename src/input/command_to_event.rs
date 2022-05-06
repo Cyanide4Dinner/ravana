@@ -12,7 +12,7 @@ use crate::{
 // * Parse a command.
 // * Trigger corresponding events.
 // -----------------------------------------------------------------------------------------------------------
-pub fn exec_cmd(_app: &mut App,
+pub fn exec_cmd(app: &mut App,
                       cmd: &str) -> Result<Option<AppRes>> {
     let args: Vec<&str> = cmd.split(" ").collect();
 
@@ -24,6 +24,16 @@ pub fn exec_cmd(_app: &mut App,
             //     error!("Oneshot sender needed, provided None.");
             // }
             Ok(Some(AppRes::AppQuit))
+        },
+        SCROLL_DOWN => {
+            app.scroll_down();
+            app.render()?;
+            Ok(None)
+        },
+        SCROLL_UP => {
+            app.scroll_up();
+            app.render()?;
+            Ok(None)
         },
         _ => { 
             Ok(None)
