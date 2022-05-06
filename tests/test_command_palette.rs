@@ -99,7 +99,7 @@ fn test_cmd_plt_text_display() -> Result<()> {
         let mut nc_lock = nc.lock().unwrap();
         let s = nc_lock.at_yx(dim_y - 1, (i + 1) as u32, &mut stylemask, &mut channels);
         drop(nc_lock);
-        assert_eq!(s, Some("".to_string()));
+        assert_eq!(s, Some(" ".to_string()));
     }
     Ok(())
 }
