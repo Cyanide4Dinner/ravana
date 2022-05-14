@@ -18,7 +18,7 @@ use crate::{
 use super::subreddit_listing_page::SubListPage;
 use super::{ 
         command_palette::CmdPalette,
-        page::{ Page, PageType },
+        page::{ Page, PageBar, PageType },
         subreddit_listing_page::SubListPostData,
         util::new_child_plane,
         util::Widget,
@@ -37,7 +37,9 @@ pub struct App<'a> {
         tui_prefs: TuiPrefs,
 
         // Pages currently in the application.
+        foc_page: u32,
         pub pages: Vec<Box<dyn Page + 'a>>,
+        pub page_bar: PageBar<'a>,
 
         // Command palette widget.
         pub cmd_plt: CmdPalette<'a>
@@ -68,13 +70,22 @@ impl<'a> App<'a> {
                               )
         )?;
 
+        let page_bar = PageBar::new(&tui_prefs,
+                                       app_plane,
+                                       0,
+                                       0,
+                                       app_plane.dim_x(),
+                                       1)?;
+
         Ok(
             App {
                 nc,
                 plane: app_plane,
                 tui_prefs,
 
+                foc_page: 0,
                 pages: Vec::new(),
+                page_bar,
 
                 cmd_plt
             }
@@ -118,7 +129,7 @@ impl<'a> App<'a> {
         let mut sub_list_page = log_err_ret!(SubListPage::new(&self.tui_prefs,
                                                     self.plane,
                                                     0,
-                                                    0,
+                                                    1,
                                                     self.plane.dim_x(),
                                                     self.plane.dim_y() - 1
                                                     ))?;
@@ -143,8 +154,9 @@ impl<'a> App<'a> {
         self.pages.push(Box::new(sub_list_page));
 
         // DEV
-        // TODO: Find ways to move cmd_plt to top automatically.
+        // TODO: Find ways to move cmd_plt & page_bar to top automatically.
         self.cmd_plt.plane.move_top();
+        self.page_bar.plane.move_top();
         Ok(())
     }
 
@@ -188,6 +200,7 @@ impl<'a> App<'a> {
 
     // Render TUI.
     pub fn render(&mut self) -> Result<()> {
+        self.page_bar.draw(&self.tui_prefs)?;
         for page in self.pages.iter_mut() {
             log_err_desc_ret!(page.draw(&self.tui_prefs), "Failed to render page")?;
         }
