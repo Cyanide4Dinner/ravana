@@ -35,6 +35,21 @@ pub fn exec_cmd(app: &mut App,
             app.render()?;
             Ok(None)
         },
+        SWITCH_PAGE => {
+            app.set_foc_page(args[1].parse::<usize>()?);
+            app.render()?;
+            Ok(None)
+        },
+        NEXT_PAGE => {
+            app.switch_next_page();
+            app.render()?;
+            Ok(None)
+        },
+        PREV_PAGE => {
+            app.switch_prev_page();
+            app.render()?;
+            Ok(None)
+        }
         _ => { 
             Ok(None)
         }

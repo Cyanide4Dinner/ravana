@@ -35,7 +35,7 @@ pub trait Page: Send {
 
 pub struct PageBar<'a> {
     pub plane: &'a mut NcPlane,
-    foc_page: u32,
+    pub foc_page: u32,
     page_names: Vec<&'a str>
 }
 

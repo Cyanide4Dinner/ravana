@@ -178,6 +178,23 @@ impl<'a> App<'a> {
         command_to_event::exec_cmd(self, &cmd[1..cmd.len()]) // Ignore first char which is ':'
     }
 
+    pub fn switch_next_page(&mut self) {
+        self.set_foc_page((self.foc_page + 1) % self.pages.len());
+    }
+
+    pub fn switch_prev_page(&mut self) {
+        if self.foc_page == 0 {
+            self.set_foc_page(self.pages.len() - 1);
+        } else {
+            self.set_foc_page(self.foc_page - 1);
+        }
+    }
+
+    pub fn set_foc_page(&mut self, new_foc_page: usize) {
+        self.foc_page = new_foc_page;
+        self.page_bar.foc_page = new_foc_page as u32;
+    }
+
     pub fn scroll_up(&mut self) { 
         if let Err(e) = (*self.pages[self.foc_page]).scroll_up() {
             error!("{}", e);
@@ -193,6 +210,7 @@ impl<'a> App<'a> {
     // Render TUI.
     pub fn render(&mut self) -> Result<()> {
         self.page_bar.draw(&self.tui_prefs)?;
+
         for page in self.pages.iter_mut() {
             log_err_desc_ret!(page.draw(&self.tui_prefs), "Failed to render page")?;
             page.set_visibility(false)?;
