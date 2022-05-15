@@ -234,6 +234,17 @@ macro_rules! new_child_plane {
 }
 pub(super) use new_child_plane;
 
+// Data structures
+pub struct PostData<'a> {
+    pub upvotes: u32,
+    pub heading: &'a str,
+    pub content: &'a str,
+    pub username: &'a str,
+    pub subreddit_name: &'a str,
+    pub comments: u32,
+    pub body: &'a str
+}
+
 #[cfg(test)]
 mod tests {
     use super::Color;

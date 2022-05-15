@@ -1,13 +1,12 @@
 use anyhow::Result;
 use libnotcurses_sys::{ 
     NcCell,
-    NcChannel,
     NcChannels,
     NcPlane,
     NcPlaneOptions
 };
 
-use super::{ TuiPrefs, util::{ new_child_plane, Widget} };
+use super::{ TuiPrefs, util::{ new_child_plane, PostData, Widget} };
 
 #[derive(Debug)]
 pub enum PageType {
@@ -18,9 +17,14 @@ pub enum PageType {
 // Page encapsulate functionality required to function as a "page".
 // -----------------------------------------------------------------------------------------------------------
 pub trait Page: Send {
+    fn set_visibility(&mut self, visible: bool) -> Result<()>;
+
     // Scroll up / down.
     fn scroll_up(&mut self) -> Result<()>;
     fn scroll_down(&mut self) -> Result<()>;
+
+    // Listing functions.
+    fn add_post(&mut self, tui_prefs: &TuiPrefs, data: PostData) -> Result<()>;
 
     // Draw widgets onto plane.
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()>;
