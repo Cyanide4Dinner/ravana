@@ -79,14 +79,12 @@ impl<'a> SubListPost<'a> {
         Ok(())
     }
 
-    // TODO: Safeguard against text overflow since the App crashes.
     fn draw_heading(&mut self) -> Result<()> {
         self.hdg_plane.erase();
         self.hdg_plane.puttext(0, NcAlign::Left, &self.heading)?;
         Ok(())
     }
 
-    // TODO: Safeguard against text overflow since the App crashes.
     fn draw_body(&mut self) -> Result<()> {
         self.body_plane.erase();
         self.body_plane.puttext(0, NcAlign::Left, &self.body)?;

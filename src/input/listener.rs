@@ -56,83 +56,6 @@ pub fn listen(nc: Arc<Mutex<&mut Nc>>, kbt: KeyBindingsTrie, app: &mut App) -> R
                 )? {
                 break
             };
-
-            // // -----------------------------------------------------------------------------------------------
-            // // Cmd mode - true
-            // // -----------------------------------------------------------------------------------------------
-            // if cmd_mode {
-            //     match recorded_input {
-            //         // Execute command.
-            //         NcReceived::Event(NcKey::Enter) => {
-            //             cmd_mode = false;
-            //             match app.exec_cmd() {
-            //                 Ok(Some(AppRes::AppQuit)) => { break; },
-            //                 Err(e) => { error!("Unable to execute command {}", e); },
-            //                 _ => {  }
-            //             };
-            //             continue;
-            //         },
-            //
-            //         // Escape command mode.
-            //         NcReceived::Event(NcKey::Esc) => {
-            //             cmd_mode = false;
-            //             log_err_desc!(app.exit_cmd(), "Unable to exit command palette");
-            //             continue;
-            //         },
-            //
-            //         _ => {
-            //             // Validate if input recieved is compatible.
-            //             if cmd_plt_val_input(&recorded_input) {
-            //                 match app.input_cmd_plt(input_details.clone()) {
-            //                     Ok(AppRes::CmdModeCont) => {
-            //                         continue;
-            //                     },
-            //                     Ok(AppRes::CmdModeQuit) => {
-            //                         cmd_mode = false;
-            //                         continue;
-            //                     },
-            //                     Err(e) => {
-            //                         error!("{}", e);
-            //                     },
-            //                     Ok(ar) => {
-            //                         error!("Invalid return from App to listener {:?}", ar)
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-            // // -----------------------------------------------------------------------------------------------
-            // // Cmd mode - false
-            // // -----------------------------------------------------------------------------------------------
-            // else {
-            //     if let NcReceived::Char(':') = recorded_input {
-            //         cmd_mode = true;
-            //         log_err_desc!(app.enter_cmd(), "Unable to enter command palette");
-            //         buffer.clear();
-            //         continue;
-            //     } else {
-            //         if let Some(mut key) = gen_key(&recorded_input, &input_details) {
-            //             buffer.append(&mut key);
-            //             if let None = kbt.get_node(&buffer) {
-            //                 buffer.clear();
-            //             }
-            //             else {
-            //                 // TODO: Find efficient way of detecting AppQuit, currently for this one detection
-            //                 // all trait objects of UserEvent are made to have get_name()
-            //                 if let Some(cmd) = kbt.get(&buffer) {
-            //                     log_err_desc!(exec_cmd(app, cmd), "");
-            //
-            //                     // If AppQuit, leave.
-            //                     if cmd.eq("app_quit") {
-            //                         break;
-            //                     }
-            //                     buffer.clear();
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
         }
     }
 
@@ -209,8 +132,6 @@ pub fn handle_input(
                     buffer.clear();
                 }
                 else {
-                    // TODO: Find efficient way of detecting AppQuit, currently for this one detection
-                    // all trait objects of UserEvent are made to have get_name()
                     if let Some(cmd) = kbt.get(buffer as &KeyCombination) {
                         log_err_desc!(exec_cmd(app, cmd), "");
 
@@ -226,8 +147,6 @@ pub fn handle_input(
     }
     Ok(true)
 }
-
-//TODO: Test function to see if all keys are covered and all possibilities handled.
 
 // Generate KeyCombination for NcReceived & NcInput.
 fn gen_key(ncr: &NcReceived, id: &NcInput) -> Option<KeyCombination> {

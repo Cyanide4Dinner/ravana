@@ -111,7 +111,6 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    // TODO: Remove (simply for dev process)
     pub fn dummy_render(&mut self) -> Result<()> {
         self.add_page(PageType::SubredditListing)?;
         let sub_list_page = &mut self.pages[0];       
@@ -144,15 +143,12 @@ impl<'a> App<'a> {
 
         self.foc_page = 1;
 
-        // DEV
-        // TODO: Find ways to move cmd_plt & page_bar to top automatically.
         self.cmd_plt.plane.move_top();
         self.page_bar.plane.move_top();
 
         Ok(())
     }
 
-    // TODO: Find better ways of ordering planes as layers in App.
     pub fn input_cmd_plt(&mut self, ncin: NcInput) -> Result<AppRes> {
         let res = log_err_ret!(self.cmd_plt.input(ncin))?;
         self.render()?;
