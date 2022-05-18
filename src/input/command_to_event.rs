@@ -5,9 +5,6 @@ use crate::{
     tui::{ App, AppRes }
 };
 
-
-// TODO: Write test to check if all commands are parsed and each event is triggered properly.
-
 // -----------------------------------------------------------------------------------------------------------
 // * Parse a command.
 // * Trigger corresponding events.

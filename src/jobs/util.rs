@@ -48,7 +48,6 @@ pub mod config {
         pub tui: TuiPrefsDes 
     }
     
-    //TODO: Resolve default configuration from default Config.toml directly - for cases where
     // Config.toml is not found
     impl Default for Config {
         fn default() -> Config {

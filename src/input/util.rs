@@ -206,7 +206,6 @@ pub mod key_bindings {
 
     pub type KeyCombination = Vec<Key>;
 
-    //TODO: Add support for leader key.
     pub type KeyBindingsTrie = SequenceTrie<Key, String>;
 
     pub fn create_key_bindings_trie(kb: &HashMap<String, String>) -> Result<KeyBindingsTrie> {

@@ -21,7 +21,6 @@ pub fn ravana() -> Result<()> {
     let nc = Arc::new(Mutex::new(unsafe { log_err_desc_ret!(Nc::new(), "Failed to instantiate Nc.")? }));
 
     // Validate config
-    // TODO: Validate key-bindings
     {
         if !val_tui_prefs_des(&config.tui) { 
             return log_err_ret!(Err(anyhow!("Invalid TUI format in config.")));
@@ -33,7 +32,6 @@ pub fn ravana() -> Result<()> {
             "Failed to generate TUI prefs"
         )?
     )?;
-    // TODO: Remove
     app.dummy_render()?;
     app.render().unwrap();
 
