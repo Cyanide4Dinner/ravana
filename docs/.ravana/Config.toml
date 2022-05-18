@@ -45,6 +45,9 @@ interface.mouse-events-enable				= true
 theme.highlight-fg									= "#030F04"
 theme.highlight-bg									= "#0df93f"
 
+theme.page-bar-fg										= "#3922e4"
+theme.page-bar-bg										= "#a0e422"
+theme.page-bar-current-bg						= "#ffffff"
 theme.post-header-fg								= "#030F04"
 theme.post-header-bg								= "#0df93f"
 theme.post-upvoted-fg								= "#fafafa"

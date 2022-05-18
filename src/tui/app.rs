@@ -18,10 +18,10 @@ use crate::{
 use super::subreddit_listing_page::SubListPage;
 use super::{ 
         command_palette::CmdPalette,
-        page::{ Page, PageType },
-        subreddit_listing_page::SubListPostData,
+        page::{ Page, PageBar, PageType },
         util::new_child_plane,
         util::Widget,
+        util::PostData
 };
 
 // -----------------------------------------------------------------------------------------------------------
@@ -37,7 +37,9 @@ pub struct App<'a> {
         tui_prefs: TuiPrefs,
 
         // Pages currently in the application.
+        foc_page: usize,
         pub pages: Vec<Box<dyn Page + 'a>>,
+        pub page_bar: PageBar<'a>,
 
         // Command palette widget.
         pub cmd_plt: CmdPalette<'a>
@@ -68,13 +70,22 @@ impl<'a> App<'a> {
                               )
         )?;
 
+        let page_bar = PageBar::new(&tui_prefs,
+                                       app_plane,
+                                       0,
+                                       0,
+                                       app_plane.dim_x(),
+                                       1)?;
+
         Ok(
             App {
                 nc,
                 plane: app_plane,
                 tui_prefs,
 
+                foc_page: 0,
                 pages: Vec::new(),
+                page_bar,
 
                 cmd_plt
             }
@@ -86,28 +97,15 @@ impl<'a> App<'a> {
         info!("Adding new page of type {:?}.", page_type);
         match page_type {
             PageType::SubredditListing => {
-                // let mut sub_list_page = log_err_ret!(SubListPage::new(&self.tui_prefs,
-                //                                             self.plane,
-                //                                             0,
-                //                                             0,
-                //                                             self.plane.dim_x(),
-                //                                             self.plane.dim_y(),
-                //                                             ))?;
-                //
-                // // DEV
-                // sub_list_page.add_post(&self.tui_prefs, SubListPostData {
-                //     heading: "hadfafda",
-                //     content: "fahfaljdf",
-                //     upvotes: 78,
-                //     username: "afhaldjf",
-                //     subreddit_name: "rust",
-                //     comments: 78
-                // }).context("Failed to create new page of type SubredditListing.")?;
-                // self.pages.push(Box::new(sub_list_page));
-                //
-                // // DEV
-                // // TODO: Find ways to move cmd_plt to top automatically.
-                // self.cmd_plt.plane.move_top();
+                let sub_list_page = log_err_ret!(SubListPage::new(&self.tui_prefs,
+                                                            self.plane,
+                                                            0,
+                                                            1,
+                                                            self.plane.dim_x(),
+                                                            self.plane.dim_y() - 1,
+                                                            ))?;
+                self.pages.push(Box::new(sub_list_page));
+                self.foc_page = self.pages.len() - 1;
             }
         }
         Ok(())
@@ -115,18 +113,10 @@ impl<'a> App<'a> {
 
     // TODO: Remove (simply for dev process)
     pub fn dummy_render(&mut self) -> Result<()> {
-        let mut sub_list_page = log_err_ret!(SubListPage::new(&self.tui_prefs,
-                                                    self.plane,
-                                                    0,
-                                                    0,
-                                                    self.plane.dim_x(),
-                                                    self.plane.dim_y() - 1
-                                                    ))?;
-
-        // DEV
-        
+        self.add_page(PageType::SubredditListing)?;
+        let sub_list_page = &mut self.pages[0];       
         for x in 0..13 {
-            sub_list_page.add_post(&self.tui_prefs, SubListPostData {
+            (*sub_list_page).add_post(&self.tui_prefs, PostData {
                 heading: "hadfafda",
                 content: "fahfaljdf",
                 upvotes: x,
@@ -136,15 +126,29 @@ impl<'a> App<'a> {
                 body: "jfkladjfl ajdfla jdflkj"
             }).context("Failed to create new page of type SubredditListing.")?;
         }
-        sub_list_page.scroll_down()?;
-        sub_list_page.scroll_up()?;
-        // sub_list_page.scroll_down()?;
 
-        self.pages.push(Box::new(sub_list_page));
+        self.add_page(PageType::SubredditListing)?;
+        let sub_list_page2 = &mut self.pages[1]; 
+        
+        for x in 0..13 {
+            (*sub_list_page2).add_post(&self.tui_prefs, PostData {
+                heading: "ffffff",
+                content: "hhhhhhhh",
+                upvotes: x,
+                username: "bbbbbbbbb",
+                subreddit_name: "hhhhhhhh",
+                comments: 78,
+                body: "ooooooooooooooooooo"
+            }).context("Failed to create new page of type SubredditListing.")?;
+        }
+
+        self.foc_page = 1;
 
         // DEV
-        // TODO: Find ways to move cmd_plt to top automatically.
+        // TODO: Find ways to move cmd_plt & page_bar to top automatically.
         self.cmd_plt.plane.move_top();
+        self.page_bar.plane.move_top();
+
         Ok(())
     }
 
@@ -174,23 +178,45 @@ impl<'a> App<'a> {
         command_to_event::exec_cmd(self, &cmd[1..cmd.len()]) // Ignore first char which is ':'
     }
 
+    pub fn switch_next_page(&mut self) {
+        self.set_foc_page((self.foc_page + 1) % self.pages.len());
+    }
+
+    pub fn switch_prev_page(&mut self) {
+        if self.foc_page == 0 {
+            self.set_foc_page(self.pages.len() - 1);
+        } else {
+            self.set_foc_page(self.foc_page - 1);
+        }
+    }
+
+    pub fn set_foc_page(&mut self, new_foc_page: usize) {
+        self.foc_page = new_foc_page;
+        self.page_bar.foc_page = new_foc_page as u32;
+    }
+
     pub fn scroll_up(&mut self) { 
-        if let Err(e) = (*self.pages[0]).scroll_up() {
+        if let Err(e) = (*self.pages[self.foc_page]).scroll_up() {
             error!("{}", e);
         }
     }
 
     pub fn scroll_down(&mut self) { 
-        if let Err(e) = (*self.pages[0]).scroll_down() {
+        if let Err(e) = (*self.pages[self.foc_page]).scroll_down() {
             error!("{}", e)
         }
     }
 
     // Render TUI.
     pub fn render(&mut self) -> Result<()> {
+        self.page_bar.draw(&self.tui_prefs)?;
+
         for page in self.pages.iter_mut() {
             log_err_desc_ret!(page.draw(&self.tui_prefs), "Failed to render page")?;
+            page.set_visibility(false)?;
         }
+
+        self.pages[self.foc_page].set_visibility(true)?;
 
         if let Ok(mut nc_lock) = self.nc.lock() {
             log_err_desc_ret!(nc_lock.render(), "Failed to render app")?;

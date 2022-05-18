@@ -13,28 +13,28 @@ use ravana::{
 // - Command palette should be at the top of App in CmdMode.
 // -----------------------------------------------------------------------------------------------------------
 
-#[test]
-#[serial]
-fn test_cmd_plt_pos() -> Result<()> {
-    let mut config = load_config();
-    config.tui.interface.mouse_events_enable = false; // Disable mouse events for GitHub Actions to work.
-    let nc = Arc::new(Mutex::new(unsafe { Nc::new()? }));
-
-    let mut app = App::new(nc.clone(),
-        TuiPrefs::gen_tui_prefs(&config.tui)?
-    )?;
-    app.dummy_render()?;
-
-    app.enter_cmd()?;
-    app.render().unwrap();
-
-    // If command palette is at top it will return NULL for nc_above.
-    // let nc_parent = unsafe { c_api::ncplane_parent(app.cmd_plt.plane as *mut NcPlane) };
-    let nc_above = unsafe { c_api::ncplane_above(app.cmd_plt.plane as *mut NcPlane) };
-    assert_eq!(nc_above, std::ptr::null::<NcPlane>() as *mut NcPlane);
-
-    Ok(())
-}
+// #[test]
+// #[serial]
+// fn test_cmd_plt_pos() -> Result<()> {
+//     let mut config = load_config();
+//     config.tui.interface.mouse_events_enable = false; // Disable mouse events for GitHub Actions to work.
+//     let nc = Arc::new(Mutex::new(unsafe { Nc::new()? }));
+//
+//     let mut app = App::new(nc.clone(),
+//         TuiPrefs::gen_tui_prefs(&config.tui)?
+//     )?;
+//     app.dummy_render()?;
+//
+//     app.enter_cmd()?;
+//     app.render().unwrap();
+//
+//     // If command palette is at top it will return NULL for nc_above.
+//     // let nc_parent = unsafe { c_api::ncplane_parent(app.cmd_plt.plane as *mut NcPlane) };
+//     let nc_above = unsafe { c_api::ncplane_above(app.cmd_plt.plane as *mut NcPlane) };
+//     assert_eq!(nc_above, std::ptr::null::<NcPlane>() as *mut NcPlane);
+//
+//     Ok(())
+// }
 
 // -----------------------------------------------------------------------------------------------------------
 // * Test if : produces cmd mode entry.

@@ -10,33 +10,34 @@ use libnotcurses_sys::{
 use log::error;
 
 use crate::tools::log_err_desc_ret;
-use super::{ page::Page, TuiPrefs, util::{ Group, new_child_plane, Widget } };
-
-// Data to display in a post item of subreddit listing.
-pub struct SubListPostData<'a> {
-    pub upvotes: u32,
-    pub heading: &'a str,
-    pub content: &'a str,
-    pub username: &'a str,
-    pub subreddit_name: &'a str,
-    pub comments: u32,
-    pub body: &'a str
-}
+use super::{ page::Page, TuiPrefs, util::{ Group, new_child_plane, PostData, Widget } };
 
 // Subreddit lisitng post item widget.
 pub struct SubListPost<'a> {
     plane: &'a mut NcPlane,
 
-    data: SubListPostData<'a>,
-
     hdr_plane:  &'a mut NcPlane,
     hdg_plane:  &'a mut NcPlane,
-    body_plane: &'a mut NcPlane
+    body_plane: &'a mut NcPlane,
+
+    upvotes: u32,
+    heading: String,
+    content: String,
+    username: String,
+    subreddit_name: String,
+    comments: u32,
+    body: String
 }
 
 impl<'a> SubListPost<'a> {
-    fn set_contents(&mut self, data: SubListPostData<'a>) {
-        self.data = data;
+    fn set_contents(&mut self, data: PostData) {
+        self.upvotes = data.upvotes;
+        self.heading = data.heading.to_string();
+        self.content = data.content.to_string();
+        self.username = data.username.to_string();
+        self.subreddit_name = data.subreddit_name.to_string();
+        self.comments = data.comments;
+        self.body = data.body.to_string();
     }
 
     fn draw_header(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
@@ -50,16 +51,16 @@ impl<'a> SubListPost<'a> {
         const COMMENT_COUNT_DECIMAL_PRECISION: u32 = 8;
 
         let mut pos = 0;
-        self.hdr_plane.putstr_yx_stained(0, pos, &self.data.upvotes.to_string())?;
+        self.hdr_plane.putstr_yx_stained(0, pos, &self.upvotes.to_string())?;
 
         pos = UPVOTE_COUNT_DECIMAL_PRECISION + 1;
-        self.hdr_plane.putstr_yx(Some(0), Some(pos), &self.data.username)?;
+        self.hdr_plane.putstr_yx(Some(0), Some(pos), &self.username)?;
 
         pos = pos + MAX_USERNAME_LEN + 1;
-        self.hdr_plane.putstr_yx(Some(0), Some(pos), &self.data.subreddit_name)?;
+        self.hdr_plane.putstr_yx(Some(0), Some(pos), &self.subreddit_name)?;
 
         pos = self.plane.dim_x() - COMMENT_COUNT_DECIMAL_PRECISION + 1;
-        self.hdr_plane.putstr_yx(Some(0), Some(pos), &self.data.comments.to_string())?;
+        self.hdr_plane.putstr_yx(Some(0), Some(pos), &self.comments.to_string())?;
 
         let upvoted = true;
         if upvoted {
@@ -81,14 +82,14 @@ impl<'a> SubListPost<'a> {
     // TODO: Safeguard against text overflow since the App crashes.
     fn draw_heading(&mut self) -> Result<()> {
         self.hdg_plane.erase();
-        self.hdg_plane.puttext(0, NcAlign::Left, self.data.heading)?;
+        self.hdg_plane.puttext(0, NcAlign::Left, &self.heading)?;
         Ok(())
     }
 
     // TODO: Safeguard against text overflow since the App crashes.
     fn draw_body(&mut self) -> Result<()> {
         self.body_plane.erase();
-        self.body_plane.puttext(0, NcAlign::Left, self.data.body)?;
+        self.body_plane.puttext(0, NcAlign::Left, &self.body)?;
         Ok(())
     }
 }
@@ -142,19 +143,17 @@ impl<'a> Widget for SubListPost<'a> {
         Ok(Self {
                 plane,
 
-                data: SubListPostData {
-                    heading: "",
-                    content: "",
-                    upvotes: 0,
-                    username: "",
-                    subreddit_name: "",
-                    comments: 0,
-                    body: ""
-                },
-
                 hdr_plane,
                 hdg_plane,
-                body_plane
+                body_plane,
+
+                heading: "".to_string(),
+                content: "".to_string(),
+                upvotes: 0,
+                username: "".to_string(),
+                subreddit_name: "".to_string(),
+                comments: 0,
+                body: "".to_string()
 
         })
     }
@@ -183,25 +182,13 @@ pub struct SubListPage<'a> {
     pub plane: &'a mut NcPlane,
     posts: Vec<SubListPost<'a>>,
 
+    visible: bool, // Whether the page should be visible. If not, set if off right of visible area.
+
     scrolled: u32, // Lines scrolled down, 0 initially.
     content_len: u32
 }
 
 impl<'a> SubListPage<'a> {
-    pub fn add_post(&mut self, tui_prefs: &TuiPrefs, data: SubListPostData<'a>) -> Result<()> {
-        let mut post = SubListPost::new(
-                tui_prefs,
-                self.plane,
-                0,
-                (self.posts.len() * 5) as i32,
-                self.plane.dim_x(),
-                self.plane.dim_y(),
-            )?;
-        post.set_contents(data);
-        self.posts.push(post);
-        self.content_len += 5;
-        Ok(())
-    }
 }
 
 impl<'a> Widget for SubListPage<'a> {
@@ -216,13 +203,16 @@ impl<'a> Widget for SubListPage<'a> {
 
         plane.set_fchannel(NcChannel::from_rgb(tui_prefs.theme.highlight_fg.to_nc_rgb()));
         plane.set_bchannel(NcChannel::from_rgb(tui_prefs.theme.highlight_bg.to_nc_rgb()));
-        
-        Ok(Self { 
+
+        let mut page = Self { 
             plane,
             posts: vec![],
+            visible: true,
             scrolled: 0,
             content_len: 0
-        })
+        };
+        
+        Ok(page)
     }
 
     fn draw(&mut self, _tui_prefs: &TuiPrefs) -> Result<()> {
@@ -230,7 +220,19 @@ impl<'a> Widget for SubListPage<'a> {
     }
 }
 
-impl Page for SubListPage<'_> {
+impl<'a> Page for SubListPage<'a> {
+    fn set_visibility(&mut self, visible: bool) -> Result<()> {
+        if visible != self.visible {
+            if visible {
+                self.move_rel_xy(self.plane.dim_x() as i32, 0)?;
+            } else {
+                self.move_rel_xy(- (self.plane.dim_x() as i32), 0)?;
+            }
+            self.visible = visible;
+        }
+        Ok(())
+    }
+
     fn scroll_down(&mut self) -> Result<()> {
         if self.scrolled + self.plane.dim_y() >= self.content_len - 1 {
             bail!("Bottom reached, cannot scroll down more.");
@@ -239,6 +241,20 @@ impl Page for SubListPage<'_> {
         self.move_rel_xy(0, -2)
     }
 
+    fn add_post(&mut self, tui_prefs: &TuiPrefs, data: PostData) -> Result<()> {
+        let mut post = SubListPost::new(
+                tui_prefs,
+                self.plane,
+                0,
+                (self.posts.len() * 5) as i32,
+                self.plane.dim_x(),
+                self.plane.dim_y(),
+            )?;
+        post.set_contents(data);
+        self.posts.push(post);
+        self.content_len += 5;
+        Ok(())
+    }
     fn scroll_up(&mut self) -> Result<()> {
         if self.scrolled == 0 {
             bail!("Top reached, cannot scroll up more.");
@@ -261,6 +277,7 @@ impl Page for SubListPage<'_> {
 
 impl Group for SubListPage<'_> {
     fn move_rel_xy(&mut self, x_diff: i32, y_diff: i32) -> Result<()> {
+        self.plane.move_rel(y_diff, x_diff)?;
         for post in self.posts.iter_mut() {
             post.move_rel_xy(x_diff, y_diff)?;
         }

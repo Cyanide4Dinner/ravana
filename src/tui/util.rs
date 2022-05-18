@@ -40,6 +40,24 @@ pub fn val_tui_prefs_des(tui_prefs_des: &TuiPrefsDes) -> bool {
         }
         res = res && temp_bool;
 
+        temp_bool = val_color_fmt(&theme.page_bar_fg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "page-bar-fg", theme.page_bar_fg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.page_bar_bg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "page-bar-bg", theme.page_bar_bg);
+        }
+        res = res && temp_bool;
+
+        temp_bool = val_color_fmt(&theme.page_bar_current_bg);
+        if !temp_bool {
+            error!("Wrong color format for {} {} - {}", "theme", "page-bar-current-bg", theme.page_bar_current_bg);
+        }
+        res = res && temp_bool;
+
         temp_bool = val_color_fmt(&theme.post_header_fg);
         if !temp_bool {
             error!("Wrong color format for {} {} - {}", "theme", "post-header-fg", theme.post_header_fg);
@@ -156,6 +174,9 @@ pub struct InterfacePrefs {
 pub struct Theme {
     pub highlight_fg: Color,
     pub highlight_bg: Color,
+    pub page_bar_fg: Color,
+    pub page_bar_bg: Color,
+    pub page_bar_current_bg: Color,
     pub post_header_fg: Color,
     pub post_header_bg: Color,
     pub post_upvoted_fg: Color,
@@ -185,6 +206,12 @@ impl TuiPrefs {
                     highlight_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.highlight_fg) 
                         { color } else { return Err(anyhow!("Invalid color format.")); },
                     highlight_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.highlight_bg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    page_bar_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.page_bar_fg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    page_bar_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.page_bar_bg) 
+                        { color } else { return Err(anyhow!("Invalid color format.")); },
+                    page_bar_current_bg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.page_bar_current_bg) 
                         { color } else { return Err(anyhow!("Invalid color format.")); },
                     post_header_fg: if let Some(color) = Color::get_color_from_str(&tui_prefs_des.theme.post_header_fg) 
                         { color } else { return Err(anyhow!("Invalid color format.")); },
@@ -233,6 +260,17 @@ macro_rules! new_child_plane {
     }
 }
 pub(super) use new_child_plane;
+
+// Data structures
+pub struct PostData<'a> {
+    pub upvotes: u32,
+    pub heading: &'a str,
+    pub content: &'a str,
+    pub username: &'a str,
+    pub subreddit_name: &'a str,
+    pub comments: u32,
+    pub body: &'a str
+}
 
 #[cfg(test)]
 mod tests {
