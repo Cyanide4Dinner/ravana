@@ -1,6 +1,5 @@
 use anyhow::Result;
 use libnotcurses_sys::{ 
-    NcCell,
     NcChannels,
     NcPlane,
     NcPlaneOptions
@@ -17,6 +16,13 @@ pub enum PageType {
 // Page encapsulate functionality required to function as a "page".
 // -----------------------------------------------------------------------------------------------------------
 pub trait Page: Send {
+
+    // -------------------------------------------------------------------------------------------------------
+    // * Set visibility of page.
+    // * If not visible, the page is shifted to right by the length of width, making it invisible
+    //   on render. 
+    // * For making it visible again, the shift is undoed.
+    // -------------------------------------------------------------------------------------------------------
     fn set_visibility(&mut self, visible: bool) -> Result<()>;
 
     // Scroll up / down.
@@ -33,6 +39,10 @@ pub trait Page: Send {
     fn fetch(&mut self) -> Result<()>;
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// PageBar widget
+// * Shows the currnet page and list of pages on top.
+// -----------------------------------------------------------------------------------------------------------
 pub struct PageBar<'a> {
     pub plane: &'a mut NcPlane,
     pub foc_page: u32,

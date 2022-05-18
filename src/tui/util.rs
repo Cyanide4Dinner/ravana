@@ -239,6 +239,10 @@ impl TuiPrefs {
     }
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// Widget trait
+// * Widgets are functional components that make the App.
+// -----------------------------------------------------------------------------------------------------------
 pub trait Widget: Sized {
     fn new(tui_prefs: &TuiPrefs,
             plane: &mut NcPlane,
@@ -250,6 +254,11 @@ pub trait Widget: Sized {
     fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()>;
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// Group trait
+// * Groups children widgets with a parent widget.
+// * Useful for applying transformations to entire group like moving the group together.
+// -----------------------------------------------------------------------------------------------------------
 pub trait Group {
     fn move_rel_xy(&mut self, x_diff: i32, y_diff: i32) -> Result<()>;
 }
@@ -262,6 +271,7 @@ macro_rules! new_child_plane {
 pub(super) use new_child_plane;
 
 // Data structures
+
 pub struct PostData<'a> {
     pub upvotes: u32,
     pub heading: &'a str,
