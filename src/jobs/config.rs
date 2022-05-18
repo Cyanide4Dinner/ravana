@@ -62,6 +62,9 @@ mod tests {
 
             theme.highlight-fg = "#222222"
             theme.highlight-bg = "#333333"
+            theme.page-bar-fg = "#444444"
+            theme.page-bar-bg = "#555555"
+            theme.page-bar-current-bg = "#666666"
             theme.post-header-fg = "#444444"
             theme.post-header-bg = "#555555"
             theme.post-upvoted-fg = "#666666"
@@ -86,6 +89,9 @@ mod tests {
                 theme: ThemeDes {
                     highlight_fg: "#222222".to_string(),
                     highlight_bg: "#333333".to_string(),
+                    page_bar_fg: "#444444".to_string(),
+                    page_bar_bg: "#555555".to_string(),
+                    page_bar_current_bg: "#666666".to_string(),
                     post_header_fg: "#444444".to_string(),
                     post_header_bg: "#555555".to_string(),
                     post_upvoted_fg: "#666666".to_string(),

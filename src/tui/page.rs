@@ -40,7 +40,7 @@ pub struct PageBar<'a> {
 }
 
 impl<'a> Widget for PageBar<'a> {
-    fn new(_tui_prefs: &TuiPrefs,
+    fn new(tui_prefs: &TuiPrefs,
                     parent_plane: &mut NcPlane,
                     x: i32,
                     y: i32,
@@ -48,7 +48,13 @@ impl<'a> Widget for PageBar<'a> {
                     dim_y: u32
                    ) -> Result<Self> {
         let plane = new_child_plane!(parent_plane, x, y, dim_x, dim_y);
-        plane.set_base_cell(&NcCell::from_char7b(' ')?)?;
+        plane.set_base(
+            " ",
+            0,
+            NcChannels::from_rgb(
+                tui_prefs.theme.page_bar_fg.to_nc_rgb(),
+                tui_prefs.theme.page_bar_bg.to_nc_rgb(),
+            ))?;
 
         Ok(PageBar {
             plane,
@@ -57,7 +63,7 @@ impl<'a> Widget for PageBar<'a> {
         })
     }
 
-    fn draw(&mut self, _tui_prefs: &TuiPrefs) -> Result<()> {
+    fn draw(&mut self, tui_prefs: &TuiPrefs) -> Result<()> {
         const PAGE_NAME_WIDTH: u32 = 7;
         for (pos, e) in self.page_names.iter().enumerate() {
             if ((pos as u32) + 1) * PAGE_NAME_WIDTH < self.plane.dim_x() {
@@ -66,19 +72,19 @@ impl<'a> Widget for PageBar<'a> {
                 )?;
             }
         }
-        let chnls = NcChannels::from_rgb(
-            _tui_prefs.theme.cmd_plt_fg.to_nc_rgb(),
-            _tui_prefs.theme.cmd_plt_bg.to_nc_rgb()
+        let current_page_chnls = NcChannels::from_rgb(
+            tui_prefs.theme.page_bar_fg.to_nc_rgb(),
+            tui_prefs.theme.page_bar_current_bg.to_nc_rgb()
         );
         self.plane.stain(
             Some(0),
             Some(self.foc_page * PAGE_NAME_WIDTH),
             Some(1),
             Some(PAGE_NAME_WIDTH),
-            chnls,
-            chnls,
-            chnls,
-            chnls
+            current_page_chnls,
+            current_page_chnls,
+            current_page_chnls,
+            current_page_chnls,
         )?;
         Ok(())
     }

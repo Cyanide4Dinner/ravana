@@ -10,6 +10,9 @@ pub mod config {
     pub struct ThemeDes {
         pub highlight_fg: String,
         pub highlight_bg: String,
+        pub page_bar_fg: String,
+        pub page_bar_bg: String,
+        pub page_bar_current_bg: String,
         pub post_header_fg: String,
         pub post_header_bg: String,
         pub post_upvoted_fg: String,
@@ -65,6 +68,9 @@ pub mod config {
                     theme: ThemeDes {
                         highlight_fg: "#111111".to_string(),
                         highlight_bg: "#111111".to_string(),
+                        page_bar_fg: "#111111".to_string(),
+                        page_bar_bg: "#111111".to_string(),
+                        page_bar_current_bg: "#111111".to_string(),
                         post_header_fg: "#111111".to_string(), 
                         post_header_bg: "#111111".to_string(),
                         post_upvoted_fg: "#111111".to_string(),
