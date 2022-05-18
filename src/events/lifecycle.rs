@@ -7,7 +7,7 @@ use crate::{
     input::{ listen, create_key_bindings_trie },
     jobs::config::load_config,
     tools::{ log_err_desc_ret, log_err_ret },
-    tui::{ App, page::PageType, TuiPrefs, val_tui_prefs_des },
+    tui::{ App, TuiPrefs, val_tui_prefs_des },
 };
 
 // -----------------------------------------------------------------------------------------------------------

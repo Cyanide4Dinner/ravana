@@ -204,7 +204,7 @@ impl<'a> Widget for SubListPage<'a> {
         plane.set_fchannel(NcChannel::from_rgb(tui_prefs.theme.highlight_fg.to_nc_rgb()));
         plane.set_bchannel(NcChannel::from_rgb(tui_prefs.theme.highlight_bg.to_nc_rgb()));
 
-        let mut page = Self { 
+        let page = Self { 
             plane,
             posts: vec![],
             visible: true,

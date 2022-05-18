@@ -2,7 +2,6 @@ use anyhow::{ anyhow, Result };
 use log::error;
 use libnotcurses_sys::{
     c_api::{ ncreader, ncreader_contents, ncreader_clear, ncreader_destroy, ncreader_offer_input },
-    NcChannel,
     NcChannels,
     NcInput,
     NcKey,
@@ -13,7 +12,7 @@ use libnotcurses_sys::{
 };
 use std::ffi::CStr;
 
-use super::{ TuiPrefs, util::new_child_plane, util::{ Color, Widget }};
+use super::{ TuiPrefs, util::new_child_plane, util::Widget };
 use crate::tui::AppRes;
 use crate::tools::log_err_ret;
 
