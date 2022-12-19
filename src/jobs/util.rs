@@ -86,3 +86,13 @@ pub mod config {
         }
     }
 }
+
+pub mod session {
+    use serde::{ Deserialize, Serialize };
+
+    #[derive(Serialize, Deserialize, Default, Debug, PartialEq, Eq)]
+    #[serde(rename_all(deserialize = "kebab-case"))]
+    pub struct Session {
+        pub refresh_token: String
+    }
+}

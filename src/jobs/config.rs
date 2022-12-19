@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{ anyhow, Result };
 use log::{ error, info, warn };
 use std::{
     fs::File,
@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::def::app::CONFIG_DIR_PATHS;
-use super::util::config::Config;
+use super::util::{ config::Config, session::Session };
 
 // -----------------------------------------------------------------------------------------------------------
 // * Open up Config.toml for reading.
@@ -19,7 +19,7 @@ pub fn load_config() -> Config {
             Ok(mut file) => {
                 let mut contents = String::new();
                 if file.read_to_string(&mut contents).is_ok() {
-                    if let Ok(config) = deserialize_toml(&contents) {
+                    if let Ok(config) = deserialize_config_toml(&contents) {
                         info!("Using config at: {}", path);
                         return config
                     }
@@ -33,7 +33,51 @@ pub fn load_config() -> Config {
     Config::default()
 }
 
-fn deserialize_toml(s: &str) -> Result<Config, toml::de::Error> {
+fn deserialize_config_toml(s: &str) -> Result<Config, toml::de::Error> {
+    match toml::from_str(s) {
+        Ok(toml) => { Ok(toml) }
+        Err(e) => { 
+            error!("Error deserializing: {:?}", e); 
+            Err(e) 
+        }
+    }
+}
+
+pub fn get_session_file_path() -> Result<String> {
+    for path in CONFIG_DIR_PATHS {
+        if let Ok(file) = File::open(Path::new(&format!("{}{}", path, "/Session.toml"))) {
+            info!("Using Session.toml at config: {}", path);
+            return Ok(path.to_string());
+        }
+    }
+    Err(anyhow!("Cannot find Session.toml."))
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// * Open and read Session.toml.
+// * Convert to Session.
+// -----------------------------------------------------------------------------------------------------------
+pub fn load_session(session_file: &mut File) -> Session {
+    let mut contents = String::new();
+    if session_file.read_to_string(&mut contents).is_ok() {
+        if let Ok(session) = deserialize_session_toml(&contents) {
+            return session
+        }
+    }
+    error!("Unable to open config file. Returning default config.");
+    Session::default()
+}
+
+// -----------------------------------------------------------------------------------------------------------
+// * Write Session object to Session.toml.
+// -----------------------------------------------------------------------------------------------------------
+pub fn save_session(session: &Session, session_file: &mut File) -> Result<()> {
+    let session_text = toml::to_string(session)?;
+    session_file.write_all(session_text.as_bytes())?;
+    Ok(())
+}
+
+fn deserialize_session_toml(s: &str) -> Result<Session, toml::de::Error> {
     match toml::from_str(s) {
         Ok(toml) => { Ok(toml) }
         Err(e) => { 
@@ -47,13 +91,13 @@ fn deserialize_toml(s: &str) -> Result<Config, toml::de::Error> {
 mod tests {
     use std::collections::HashMap;
 
-    use super::{ Config, deserialize_toml };
+    use super::{ Config, deserialize_config_toml };
     use crate::jobs::{ InterfaceDes, ThemeDes, TuiPrefsDes };
 
-    // Test if deserialize_toml deserializes toml proper.
+    // Test if deserialize_config_toml deserializes toml proper.
     #[test]
-    fn test_deserialize_toml() {
-        let res_config: Config = deserialize_toml(r##"
+    fn test_deserialize_config_toml() {
+        let res_config: Config = deserialize_config_toml(r##"
             [key-bindings]
             app_quit = "abcdefghi"
 

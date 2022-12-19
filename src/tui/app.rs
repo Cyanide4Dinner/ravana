@@ -8,7 +8,9 @@ use libnotcurses_sys::{
     NcPlaneOptions
 };
 use log::{ error, info };
+use ravana_reddit_api::api::RedditClient;
 use std::sync::{ Arc, Mutex };
+use tokio::runtime;
 
 use crate::{ 
         input::command_to_event,
@@ -33,6 +35,10 @@ use super::{
 pub struct App<'a> {
         // Nc instance.
         nc: Arc<Mutex<&'a mut Nc>>,
+        // Runtime object for executing async.
+        rt: runtime::Runtime,
+        reddit_client: RedditClient,
+
         plane: &'a mut NcPlane,
         tui_prefs: TuiPrefs,
 
@@ -46,7 +52,7 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs) 
+    pub fn new<'b>(nc: Arc<Mutex<&'b mut Nc>>, tui_prefs: TuiPrefs, reddit_client: RedditClient) 
             -> Result<App<'b>> {
         let mut nc_lock = nc.lock().unwrap();
         let stdplane = unsafe { nc_lock.stdplane() }; 
@@ -80,6 +86,11 @@ impl<'a> App<'a> {
         Ok(
             App {
                 nc,
+                rt: runtime::Builder::new_multi_thread()
+                    .enable_all()
+                    .build()?,
+                reddit_client,
+
                 plane: app_plane,
                 tui_prefs,
 

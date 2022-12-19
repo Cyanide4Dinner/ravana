@@ -8,12 +8,11 @@ edition = "2018"
 
 [dependencies]
 # libnotcurses-sys = { git = "https://github.com/dankamongmen/libnotcurses-sys" }
-libnotcurses-sys = "3.5.0"
+libnotcurses-sys = "= 3.5.0"
 reqwest = { version = "0.11", default-features = false, features = [
 "rustls-tls",
 "json"
 ] }
-oauth2 = "4.1.0"
 url = "2.2.2"
 anyhow = "1.0.49"
 thiserror = "1.0.30"
@@ -27,6 +26,9 @@ sequence_trie = "*"
 env_logger = "0.9.0"
 serial_test = "0.6.0"
 nix = "0.23.1"
+tokio = { version = "1.19.2", features = ["rt"] }
+# ravana_reddit_api = { git = "https://github.com/Cyanide4Dinner/ravana_reddit_api", branch = "refactoring/0.2.0-restructure" }
+ravana_reddit_api = { path = "../ravana_reddit_api" }
 
 [dev-dependencies]
 # libnotcurses-sys = {version = "2.4.5", path = "../../Repos/libnotcurses-sys"}
